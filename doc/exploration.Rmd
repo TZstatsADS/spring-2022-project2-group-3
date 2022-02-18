@@ -1,0 +1,37 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r set up, include=FALSE}
+require(tidyverse)
+require(dplyr)
+require(lubridate)
+```
+
+```{r}
+#getwd()
+#data.raw = read_csv("../data/License_Applications.csv")
+```
+
+```{r}
+cities <- c("BRONX", "NEW YORK", "QUEENS", "BROOKLYN", "STATEN ISLAND")
+
+data = data.raw %>% filter(City %in% cities) %>% 
+  select(ID="Application ID", l_type="License Type", 
+             l_kind="Application or Renewal", status="Status",
+             s_date="Start Date", e_date="End Date",
+             category="License Category", city="City", zip="Zip", 
+             longitute="Longitude", latitude="Latitude") %>%
+  drop_na() %>%
+  mutate(s_date = 
+           as_date(s_date, format = "%m/%d/%Y")) %>%
+  mutate(e_date = 
+           as_date(e_date, format = "%m/%d/%Y")) %>%
+  filter(s_date >= as_date("01/01/2017",format = "%m/%d/%Y"))
+
+str(data)
+```
+
+
+
