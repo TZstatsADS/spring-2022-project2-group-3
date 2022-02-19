@@ -37,7 +37,7 @@ if (!require("leafsync")) {
 }
 
 #Data Processing
-total_citi_bike_df = read.csv('./data/citibike_data.csv')
+total_citi_bike_df = read.csv('../data/citibike_data.csv')
 ##compute the daily in and out difference for the station
 total_citi_bike_df$day_diff = total_citi_bike_df$endcount - total_citi_bike_df$startcount
 #assign each column to weekend or weekday

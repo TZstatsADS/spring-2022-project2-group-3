@@ -5,7 +5,7 @@ account: ads-how-covid-influenced-business
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 5691077
-bundleId: 5597484
+bundleId: 5597508
 url: https://ads-how-covid-influenced-business.shinyapps.io/myapp/
-when: 1645290050.93154
-lastSyncTime: 1645290050.93159
+when: 1645291036.6358
+lastSyncTime: 1645291036.63581

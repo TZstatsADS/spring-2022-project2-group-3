@@ -1,4 +1,4 @@
 library("shiny")
-source("./app/ui.R")
-source("./app/server.R")
-# shinyApp(ui = ui, server = server)
+source("./myapp/ui.R")
+source("./myapp/server.R")
+shinyApp(ui = shinyUI, server = shinyServer)
