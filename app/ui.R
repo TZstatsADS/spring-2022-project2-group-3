@@ -72,12 +72,36 @@ shinyUI(dashboardPage(
       #---------proc_time----------
       tabItem(tabName="proc_time",
               fluidPage(
-                h3("XXXXXXXXXXX", align="center")
+                sidebarLayout(
+                  sidebarPanel(
+                    radioButtons("app_or_renew", 
+                                 label=h3("Type of Application"),
+                                 choices=list("All"=1, "New Application"=2,
+                                                 "Renewal"=3)
+                                ),
+                    radioButtons("category", label=h3("Business Category"),
+                                 choices=list("Home Improvement Contractor",
+                                              "Tobacco Retail Dealer",
+                                              "Secondhand Dealer - General",
+                                              "Electronic Cigarette Dealer",
+                                              "Laundries",
+                                              "Electronics Store",
+                                              "Stoop Line Stand",
+                                              "Garage",
+                                              "Electronic & Appliance Service",
+                                              "Dealer In Products",
+                                              "Pawnbroker",
+                                              "Secondhand Dealer - Auto"))
+                  ),
+                mainPanel(
+                  plotOutput("plot_proc_time_1"),
+                  plotOutput("plot_proc_time_2")
+                ))
                 #ADD CONTENT XXXXXXXXXXXXXX
               )
       ),
       
-      #---------proc_time----------
+      #---------pass_rate----------
       tabItem(tabName="pass_rate",
               fluidPage(
                 h3("XXXXXXXXXXX", align="center")
