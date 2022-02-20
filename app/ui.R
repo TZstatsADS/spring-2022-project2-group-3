@@ -7,9 +7,9 @@ if (!require("shinyWidgets")) {
   install.packages("shinyWidgets")
   library(shinyWidgets)
 }
-if (!require("shinythemes")) {
-  install.packages("shinythemes")
-  library(shinythemes)
+if (!require("shinydashboard")) {
+  install.packages("shinydashboard")
+  library(shinydashboard)
 }
 if (!require("leaflet")) {
   install.packages("leaflet")
@@ -20,55 +20,80 @@ if (!require("leaflet.extras")) {
   library(leaflet.extras)
 }
 
-# Define UI for application that draws a histogram
-shinyUI(
-    navbarPage(strong("Citi Bike Study",style="color: white;"), 
-               theme=shinytheme("cerulean"), # select your themes https://rstudio.github.io/shinythemes/
-#------------------------------- tab panel - Maps ---------------------------------
-                tabPanel("Maps",
-                         icon = icon("map-marker-alt"), #choose the icon for
-                         div(class = 'outer',
-                        # side by side plots
-                        fluidRow(
-                                splitLayout(cellWidths = c("50%", "50%"), 
-                                             leafletOutput("left_map",width="100%",height=1200),
-                                             leafletOutput("right_map",width="100%",height=1200))),
-                        #control panel on the left
-                        absolutePanel(id = "control", class = "panel panel-default", fixed = TRUE, draggable = TRUE,
-                                      top = 200, left = 50, right = "auto", bottom = "auto", width = 250, height = "auto",
-                                      tags$h4('Citi Bike Activity Comparison'), 
-                                      tags$br(),
-                                      tags$h5('Pre-covid(Left) Right(Right)'), 
-                                      prettyRadioButtons(
-                                                      inputId = "adjust_score",
-                                                      label = "Score List:", 
-                                                      choices = c("start_cnt", 
-                                                                  "end_cnt", 
-                                                                  "day_diff_absolute",
-                                                                  "day_diff_percentage"),
-                                                      inline = TRUE, 
-                                                      status = "danger",
-                                                      fill = TRUE
-                                                        ),
-                                      awesomeRadio("adjust_time", 
-                                                   label="Time",
-                                                    choices =c("Overall",
-                                                               "Weekday", 
-                                                               "Weekend"), 
-                                                    selected = "Overall",
-                                                    status = "warning"),
-                                      # selectInput('adjust_weather',
-                                      #             label = 'Adjust for Weather',
-                                      #             choices = c('Yes','No'), 
-                                      #             selected = 'Yes'
-                                      #             ),
-                                      style = "opacity: 0.80"
-                                      
-                                ), #Panel Control - Closing
-                            ) #Maps - Div closing
-                        ) #tabPanel maps closing
-   
-
-
-    ) #navbarPage closing  
-) #Shiny UI closing    
+shinyUI(dashboardPage(
+  dashboardHeader(title="COVID-19's Impact on NYC Businesses", 
+                  titleWidth=400),
+  
+  # SideBar content
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Home", tabName="home", icon=icon("home")),
+      menuItem("MAP", tabName="map", icon=icon("map")),
+      menuItem("Interactive Plots", tabName="plots", icon=icon("signal"),
+               startExpanded=TRUE,
+               menuSubItem("New application", tabName="new_app"),
+               menuSubItem("Processing Time", tabName="proc_time"),
+               menuSubItem("Pass Rate", tabName="pass_rate")
+               #ADD CONTENT XXXXXXXXXXXXXX
+               ),
+      menuItem("Findings", tabName="findings", icon=icon("star"))
+      
+    )
+  ),
+  
+  # Body content
+  dashboardBody(
+    tabItems(
+      #-----------home------------
+      tabItem(tabName="home",
+              fluidPage(
+                h2(strong("Title XXXXXXXXX"), align="center"),
+                h3("Team Members XXXXXXXXXXX", align="center")
+                #ADD CONTENT XXXXXXXXXXXXXX
+              )
+      ),
+      
+      #-----------map------------
+      tabItem(tabName="map",
+              fluidPage(
+                h3("XXXXXXXXXXX", align="center")
+                #ADD CONTENT XXXXXXXXXXXXXX
+              )
+      ),
+      
+      #---------new_app----------
+      tabItem(tabName="new_app",
+              fluidPage(
+                h3("XXXXXXXXXXX", align="center")
+                #ADD CONTENT XXXXXXXXXXXXXX
+              )
+      ),
+      
+      #---------proc_time----------
+      tabItem(tabName="proc_time",
+              fluidPage(
+                h3("XXXXXXXXXXX", align="center")
+                #ADD CONTENT XXXXXXXXXXXXXX
+              )
+      ),
+      
+      #---------proc_time----------
+      tabItem(tabName="pass_rate",
+              fluidPage(
+                h3("XXXXXXXXXXX", align="center")
+                #ADD CONTENT XXXXXXXXXXXXXX
+              )
+      ),
+      
+      #---------findings----------
+      tabItem(tabName="findings",
+              fluidPage(
+                h3("XXXXXXXXXXX", align="center")
+                #ADD CONTENT XXXXXXXXXXXXXX
+              )
+      )
+    )
+  )
+  
+  )
+)
