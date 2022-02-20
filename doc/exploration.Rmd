@@ -7,17 +7,20 @@ output: html_notebook
 require(tidyverse)
 require(dplyr)
 require(lubridate)
+require(ggplot2)
+require(reshape)
 ```
 
 ```{r}
 #getwd()
-#data.raw = read_csv("../data/License_Applications.csv")
+# data.raw = read_csv("../data/License_Applications.csv")
 ```
 
 ```{r}
+# data wrangling
 cities <- c("BRONX", "NEW YORK", "QUEENS", "BROOKLYN", "STATEN ISLAND")
 
-data = data.raw %>% filter(City %in% cities) %>% 
+data = data.raw %>%
   select(ID="Application ID", l_type="License Type", 
              l_kind="Application or Renewal", status="Status",
              s_date="Start Date", e_date="End Date",
@@ -28,10 +31,113 @@ data = data.raw %>% filter(City %in% cities) %>%
            as_date(s_date, format = "%m/%d/%Y")) %>%
   mutate(e_date = 
            as_date(e_date, format = "%m/%d/%Y")) %>%
-  filter(s_date >= as_date("01/01/2017",format = "%m/%d/%Y"))
+  filter(city %in% cities) %>% 
+  filter(s_date >= as_date("01/01/2017",format = "%m/%d/%Y")) %>%
+  filter(s_date < e_date)
+
+cats = data %>% count(category, sort=TRUE) %>%
+  filter(n>1000) %>%
+  select(category)
+
+data = data %>%
+  filter(category %in% cats$category)
 
 str(data)
 ```
+```{r}
+# data aggregated by month
+
+all_month = data %>% 
+  group_by(month = floor_date(s_date, "month")) %>%
+  summarize(issued_all = (sum(status=="Issued")), 
+            denied_all = (sum(status=="Denied")),
+            rate_all = sum(status=="Issued")/(sum(status=="Issued")+
+                                                  sum(status=="Denied")),
+            time_all = mean(difftime(e_date, s_date)))
+
+app_month = data %>% 
+  group_by(month = floor_date(s_date, "month")) %>%
+  filter(l_kind=="Application") %>%
+  summarize(issued_app = (sum(status=="Issued")), 
+            denied_app = (sum(status=="Denied")),
+            rate_app = sum(status=="Issued")/(sum(status=="Issued")+
+                                                  sum(status=="Denied")),
+            time_app = mean(difftime(e_date, s_date)))
+
+renew_month = data %>% 
+  group_by(month = floor_date(s_date, "month")) %>%
+  filter(l_kind=="Renewal") %>%
+  summarize(issued_renew = (sum(status=="Issued")), 
+            denied_renew = (sum(status=="Denied")),
+            rate_renew = sum(status=="Issued")/(sum(status=="Issued")+
+                                                  sum(status=="Denied")),
+            time_renew = mean(difftime(e_date, s_date)))
+
+
+data_month = merge(all_month, app_month, by="month") %>%
+  merge(renew_month, by="month")
+```
+
+```{r}
+# Average approval rate
+rate_molten = melt(data.frame(month=data_month$month, 
+                         rate_all=data_month$rate_all,
+                         rate_app=data_month$rate_app, 
+                         rate_renew=data_month$rate_renew),
+              id.vars = "month")
+
+ggplot(rate_molten, aes(x=month, y=value, colour=variable)) + 
+  geom_line(size=1.5) + ggtitle("Average approval rate")
+# Can add number of app
+```
+
+```{r}
+# Average processing time
+time_molten = melt(data.frame(month=data_month$month, 
+                         rate_all=data_month$time_all,
+                         rate_app=data_month$time_app, 
+                         rate_renew=data_month$time_renew),
+              id.vars = "month")
+
+ggplot(time_molten, aes(x=month, y=value, colour=variable)) + 
+  geom_line(size=1.5) + ggtitle("Average processing time")
+
+```
+
+```{r}
+data_after_covid = data %>%
+  filter(s_date >= as_date("2020-03-01")) %>%
+  filter(s_date < as_date("2021-09-01"))
+
+data_before_covid = data %>%
+  filter(s_date >= as_date("2018-09-01")) %>%
+  filter(s_date < as_date("2020-03-01"))
+```
+
+```{r}
+after_covid = data_after_covid %>%
+  select(category, status) %>%
+  group_by(category) %>%
+  summarize(issued_after = sum(status=="Issued"), denied_after = sum(status=="Denied"))
+  
+after_covid = after_covid %>% add_row(category="Total", issued_after=sum(data_after_covid$status=="Issued"), denied_after=sum(data_after_covid$status=="Denied")) %>%
+  mutate("rate_after" = issued_after/(issued_after + denied_after))
+
+before_covid = data_before_covid %>%
+  select(category, status) %>%
+  group_by(category) %>%
+  summarize(issued_before = sum(status=="Issued"), denied_before = sum(status=="Denied"))
+  
+before_covid = before_covid %>% add_row(category="Total", issued_before=sum(data_before_covid$status=="Issued"), denied_before=sum(data_before_covid$status=="Denied")) %>%
+  mutate("rate_before" = issued_before/(issued_before + denied_before))
+
+jdf = merge(before_covid, after_covid, by="category")
+jdf = jdf %>%
+  mutate("diff" = rate_after - rate_before)
 
 
 
+jdf %>%
+  select(category, diff) %>%
+  arrange(diff)
+```
