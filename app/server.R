@@ -36,168 +36,107 @@ if (!require("leafsync")) {
     library(leafsync)
 }
 
+if (!require("tidyverse")) {
+  install.packages("tidyverse")
+  library(tidyverse)
+}
+
+if (!require("ggplot2")) {
+  install.packages("ggplot2")
+  library(ggplot2)
+}
+
+if (!require("lubridate")) {
+  install.packages("lubridate")
+  library(lubridate)
+}
+
+#Data Loading
+data_raw = read.csv('../data/License_Applications.csv')
+
 #Data Processing
-total_citi_bike_df = read.csv('../data/citibike_data.csv')
-##compute the daily in and out difference for the station
-total_citi_bike_df$day_diff = total_citi_bike_df$endcount - total_citi_bike_df$startcount
-#assign each column to weekend or weekday
-total_citi_bike_df$weekend_or_weekday = ifelse(total_citi_bike_df$weekday %in% c('Saturday','Sunday'), "Weekend", "Weekday")
+data = data_raw %>%
+  select(ID="Application.ID", l_type="License.Type", 
+         app_or_renew="Application.or.Renewal", status="Status",
+         s_date="Start.Date", e_date="End.Date",
+         category="License.Category", app_cat="Application.Category",
+         city="City", state="State", zip="Zip", longitute="Longitude", 
+         latitude="Latitude") %>%
+  drop_na() %>%
+  mutate(s_date = 
+           as_date(s_date, format = "%m/%d/%Y")) %>%
+  mutate(e_date = 
+           as_date(e_date, format = "%m/%d/%Y")) %>%
+  filter(state=="NY") %>% 
+  filter(s_date >= as_date("01/01/2017",format = "%m/%d/%Y")) %>%
+  filter(s_date < e_date)
 
-#station info
-citi_bike_station_info <- total_citi_bike_df[,c('station_id','station_name','station_longitude','station_latitude')]
-#remove the duplicates based on station id 
-citi_bike_station_info <- citi_bike_station_info[!duplicated(citi_bike_station_info[ , c("station_id")]),]
-
-#split the bike data to pre-covid and covid time period
-citi_bike_pre_covid_df = total_citi_bike_df[difftime(total_citi_bike_df$date,"2019-05-31")<=0,] #2019-05-01 ~ 2019-05-31
-citi_bike_covid_df = total_citi_bike_df[difftime(total_citi_bike_df$date,"2020-04-30")>=0,] #2020-05-01 ~ 2021-05-31
+#Identifying major categories
+#cats = data %>% count(category) %>%
+#  filter(n>1000) %>%
+#  select(category)
+#data = data %>%
+#  filter(category %in% cats$category)
 
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
 
-    ## Map Tab section
+    #---------proc_time----------
+    data_proc_time <- reactive({
+      if(input$app_or_renew==1) {
+        dat = data %>% group_by(month = floor_date(s_date, "month")) %>% 
+          summarize(proc_time=mean(difftime(e_date, s_date)))
+        return(dat)
+      }
+      if(input$app_or_renew==2) {
+        dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
+          filter(app_or_renew=="Application") %>%
+          summarize(proc_time=mean(difftime(e_date, s_date)))
+        return(dat)
+      }
+      if(input$app_or_renew==3) {
+        dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
+          filter(app_or_renew=="Renewal") %>%
+          summarize(proc_time=mean(difftime(e_date, s_date)))
+        return(dat)
+      }
+    })
     
-    output$left_map <- renderLeaflet({
+      data_proc_time_cat <- reactive({
+      if(input$app_or_renew==1) {
+        dat = data %>% group_by(month = floor_date(s_date, "month")) %>% 
+          filter(category==input$category) %>%
+          summarize(proc_time=mean(difftime(e_date, s_date)))
+        return(dat)
+      }
+      if(input$app_or_renew==2) {
+        dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
+          filter(app_or_renew=="Application") %>%
+          filter(category==input$category) %>%
+          summarize(proc_time=mean(difftime(e_date, s_date)))
+        return(dat)
+      }
+      if(input$app_or_renew==3) {
+        dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
+          filter(app_or_renew=="Renewal")%>%
+          filter(category==input$category) %>%
+          summarize(proc_time=mean(difftime(e_date, s_date)))
+        return(dat)
+      }
+    })
+  
+    output$plot_proc_time_1 <- renderPlot({
+      ggplot(data_proc_time(), aes(x=month, y=proc_time)) +
+        geom_line(size=1.5) + xlab("Month") + 
+        ylab("Average Processing Time in Days")
+    })
     
-    #adjust for weekday/weekend effect
-    if (input$adjust_time =='Overall') {
-        leaflet_plt_df <- citi_bike_pre_covid_df %>% 
-                            group_by(station_id) %>%
-                            summarise(total_start_count = sum(startcount),
-                                      total_end_count = sum(endcount),
-                                      total_day_diff = sum(day_diff),
-                                      total_diff_percentage = sum(day_diff)/sum(startcount),
-                            ) %>% left_join(citi_bike_station_info,by='station_id')
-    } else {
-        leaflet_plt_df <- citi_bike_pre_covid_df %>% 
-                            filter(weekend_or_weekday == input$adjust_time) %>%
-                            group_by(station_id) %>%
-                                summarise(total_start_count = sum(startcount),
-                                          total_end_count = sum(endcount),
-                                          total_day_diff = sum(day_diff),
-                                          total_diff_percentage = sum(day_diff)/sum(startcount),
-                                ) %>% left_join(citi_bike_station_info,by='station_id')
-                            } 
-
-        
-    map_2019 <- leaflet_plt_df %>%
-         leaflet(options = leafletOptions(minZoom = 11, maxZoom = 13)) %>%
-         addTiles() %>%
-         addProviderTiles("CartoDB.Positron",
-                          options = providerTileOptions(noWrap = TRUE)) %>%
-         setView(-73.9834,40.7504,zoom = 12)
-     
-     if (input$adjust_score == 'start_cnt') {
-         map_2019 %>%
-             addHeatmap(
-                        lng=~station_longitude,
-                        lat=~station_latitude,
-                        intensity=~total_start_count,
-                        max=4000,
-                        radius=8,
-                        blur=10)
-     }else if (input$adjust_score == 'end_cnt') {
-         map_2019 %>%
-             addHeatmap(
-                        lng=~station_longitude,
-                        lat=~station_latitude,
-                        intensity=~total_end_count,
-                        max=4000,
-                        radius=8,
-                        blur=10)
-     } else if (input$adjust_score == 'day_diff_absolute'){
-         map_2019 %>%
-             addHeatmap(
-                        lng=~station_longitude,
-                        lat=~station_latitude,
-                        intensity=~total_day_diff,
-                        max=50,
-                        radius=8,
-                        blur=10)
-         
-     }else if (input$adjust_score == 'day_diff_percentage'){
-         map_2019 %>%
-             addHeatmap(
-                        lng=~station_longitude,
-                        lat=~station_latitude,
-                        intensity=~total_diff_percentage,#change to total day diff percentage
-                        max=0.1,
-                        radius=8,
-                        blur=10)
-         
-     }
-     }) #left map plot
-    
-    output$right_map <- renderLeaflet({
-        #adjust for weekday/weekend effect
-        if (input$adjust_time =='Overall') {
-            leaflet_plt_df <- citi_bike_covid_df %>% 
-                group_by(station_id) %>%
-                summarise(total_start_count = sum(startcount),
-                          total_end_count = sum(endcount),
-                          total_day_diff = sum(day_diff),
-                          total_diff_percentage = sum(day_diff)/sum(startcount),
-                ) %>% left_join(citi_bike_station_info,by='station_id')
-        } else {
-            leaflet_plt_df <- citi_bike_covid_df %>% 
-                filter(weekend_or_weekday == input$adjust_time) %>%
-                group_by(station_id) %>%
-                summarise(total_start_count = sum(startcount),
-                          total_end_count = sum(endcount),
-                          total_day_diff = sum(day_diff),
-                          total_diff_percentage = sum(day_diff)/sum(startcount),
-                ) %>% left_join(citi_bike_station_info,by='station_id')
-        } 
-        #initial the map to plot on
-        map_2020 <- leaflet_plt_df %>%
-            leaflet(options = leafletOptions(minZoom = 11, maxZoom = 13)) %>%
-            addTiles() %>%
-            addProviderTiles("CartoDB.Positron",
-                             options = providerTileOptions(noWrap = TRUE)) %>%
-            setView(-73.9834,40.7504,zoom = 12) 
-        
-        if (input$adjust_score == 'start_cnt') {
-            map_2020 %>%
-                addHeatmap(
-                           lng=~station_longitude,
-                           lat=~station_latitude,
-                            intensity=~total_start_count, #change to total start count
-                            max=4000,
-                            radius=8,
-                           blur=10)
-        }else if (input$adjust_score == 'end_cnt') {
-            map_2020 %>%
-                addHeatmap(
-                           lng=~station_longitude,
-                           lat=~station_latitude,
-                           intensity=~total_end_count,#change to total end count
-                           max=4000,
-                           radius=8,
-                           blur=10)
-        } else if (input$adjust_score == 'day_diff_absolute'){
-            map_2020 %>%
-                addHeatmap(
-                           lng=~station_longitude,
-                           lat=~station_latitude,
-                           intensity=~total_day_diff,#change to total day diff
-                           max=50,
-                           radius=8,
-                           blur=10)
-            
-        }else if (input$adjust_score == 'day_diff_percentage'){
-            map_2020 %>%
-                addHeatmap(
-                           lng=~station_longitude,
-                           lat=~station_latitude,
-                           intensity=~total_diff_percentage,#change to total day diff percentage
-                           max=0.1,
-                           radius=8,
-                           blur=10)
-            
-        }
-        
-    }) #right map plot
+    output$plot_proc_time_2 <- renderPlot({
+      ggplot(data_proc_time_cat(), aes(x=month, y=proc_time)) +
+        geom_line(size=1.5) + xlab("Month") + 
+        ylab("Average Processing Time in Days")
+    })
 
 })
 
