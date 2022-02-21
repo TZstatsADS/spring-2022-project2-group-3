@@ -84,46 +84,20 @@ shinyServer(function(input, output) {
 
     #---------proc_time----------
     data_proc_time <- reactive({
-      if(input$app_or_renew==1) {
-        dat = data %>% group_by(month = floor_date(s_date, "month")) %>% 
-          summarize(proc_time=mean(difftime(e_date, s_date)))
-        return(dat)
-      }
-      if(input$app_or_renew==2) {
-        dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
-          filter(app_or_renew=="Application") %>%
-          summarize(proc_time=mean(difftime(e_date, s_date)))
-        return(dat)
-      }
-      if(input$app_or_renew==3) {
-        dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
-          filter(app_or_renew=="Renewal") %>%
-          summarize(proc_time=mean(difftime(e_date, s_date)))
-        return(dat)
-      }
+      dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew==3) filter(., app_or_renew=="Renewal") else .} %>%
+        summarize(proc_time=mean(difftime(e_date, s_date)))
+      return(dat)
     })
     
-      data_proc_time_cat <- reactive({
-      if(input$app_or_renew==1) {
-        dat = data %>% group_by(month = floor_date(s_date, "month")) %>% 
-          filter(category==input$category) %>%
-          summarize(proc_time=mean(difftime(e_date, s_date)))
-        return(dat)
-      }
-      if(input$app_or_renew==2) {
-        dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
-          filter(app_or_renew=="Application") %>%
-          filter(category==input$category) %>%
-          summarize(proc_time=mean(difftime(e_date, s_date)))
-        return(dat)
-      }
-      if(input$app_or_renew==3) {
-        dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
-          filter(app_or_renew=="Renewal")%>%
-          filter(category==input$category) %>%
-          summarize(proc_time=mean(difftime(e_date, s_date)))
-        return(dat)
-      }
+    data_proc_time_cat <- reactive({
+      dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew==3) filter(., app_or_renew=="Renewal") else .} %>%
+        filter(category==input$category) %>%
+        summarize(proc_time=mean(difftime(e_date, s_date)))
+      return(dat)
     })
   
     output$plot_proc_time_1 <- renderPlot({
@@ -136,6 +110,39 @@ shinyServer(function(input, output) {
       ggplot(data_proc_time_cat(), aes(x=month, y=proc_time)) +
         geom_line(size=1.5) + xlab("Month") + 
         ylab("Average Processing Time in Days")
+    })
+    
+    
+    #---------pass_rate----------
+    data_pass_rate <- reactive({
+      dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew_1==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew_1==3) filter(., app_or_renew=="Renewal") else .} %>%
+        summarize(pass_rate = sum(status=="Issued")/(sum(status=="Issued")+
+                                                         sum(status=="Denied")))
+      return(dat)
+    })
+    
+    data_pass_rate_cat <- reactive({
+      dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew_1==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew_1==3) filter(., app_or_renew=="Renewal") else .} %>%
+        filter(category==input$category_1) %>%
+        summarize(pass_rate = sum(status=="Issued")/(sum(status=="Issued")+
+                                                       sum(status=="Denied")))
+      return(dat)
+    })
+    
+    output$plot_pass_rate_1 <- renderPlot({
+      ggplot(data_pass_rate(), aes(x=month, y=pass_rate)) +
+        geom_line(size=1.5) + xlab("Month") + 
+        ylab("Average Passing Rate")
+    })
+    
+    output$plot_pass_rate_2 <- renderPlot({
+      ggplot(data_pass_rate_cat(), aes(x=month, y=pass_rate)) +
+        geom_line(size=1.5) + xlab("Month") + 
+        ylab("Average Passing Rate")
     })
 
 })
