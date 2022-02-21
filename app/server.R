@@ -106,11 +106,24 @@ shinyServer(function(input, output) {
         ylab("Average Processing Time in Days")
     })
     
+    output$val_proc_time_1 <- renderText({
+      paste("The average processing time is ", 
+            round(mean(data_proc_time()$proc_time),0), " days",
+            sep="")
+    })
+    
     output$plot_proc_time_2 <- renderPlot({
       ggplot(data_proc_time_cat(), aes(x=month, y=proc_time)) +
         geom_line(size=1.5) + xlab("Month") + 
         ylab("Average Processing Time in Days")
     })
+    
+    output$val_proc_time_2 <- renderText({
+      paste("The average processing time is ", 
+            round(mean(data_proc_time_cat()$proc_time),0), " days",
+            sep="")
+    })
+    
     
     
     #---------pass_rate----------
@@ -139,12 +152,26 @@ shinyServer(function(input, output) {
         ylab("Average Passing Rate")
     })
     
+    output$val_pass_rate_1 <- renderText({
+      paste("The average passing rate is ", 
+            round(100*mean(data_pass_rate()$pass_rate),2), "%",
+            sep="")
+    })
+    
+    
     output$plot_pass_rate_2 <- renderPlot({
       ggplot(data_pass_rate_cat(), aes(x=month, y=pass_rate)) +
         geom_line(size=1.5) + xlab("Month") + 
         ylab("Average Passing Rate")
     })
-
+    
+    output$val_pass_rate_2 <- renderText({
+      paste("The average passing rate is ", 
+            round(100*mean(data_pass_rate_cat()$pass_rate),2), "%",
+            sep="")
+    })
+    
+    
 })
 
 

@@ -28,12 +28,12 @@ shinyUI(dashboardPage(
   dashboardSidebar(
     sidebarMenu(
       menuItem("Home", tabName="home", icon=icon("home")),
-      menuItem("MAP", tabName="map", icon=icon("map")),
+      menuItem("Map", tabName="map", icon=icon("map")),
       menuItem("Interactive Plots", tabName="plots", icon=icon("signal"),
                startExpanded=TRUE,
                menuSubItem("New application", tabName="new_app"),
                menuSubItem("Processing Time", tabName="proc_time"),
-               menuSubItem("Pass Rate", tabName="pass_rate")
+               menuSubItem("Passing Rate", tabName="pass_rate")
                #ADD CONTENT XXXXXXXXXXXXXX
                ),
       menuItem("Findings", tabName="findings", icon=icon("star"))
@@ -104,13 +104,15 @@ shinyUI(dashboardPage(
                                               "Dealer In Products",
                                               "Pawnbroker",
                                               "Secondhand Dealer - Auto")),
-                    width=2
+                    width=3
                   ),
                 mainPanel(
                   h3("All Businesses", align="center"),
+                  span(textOutput("val_proc_time_1"), style="font-size: 18px"),
                   plotOutput("plot_proc_time_1"),
                   hr(),
                   h3("Business-type Specific", align="center"),
+                  span(textOutput("val_proc_time_2"), style="font-size: 18px"),
                   plotOutput("plot_proc_time_2")
                 ))
               )
@@ -152,13 +154,15 @@ shinyUI(dashboardPage(
                                               "Pawnbroker",
                                               "Secondhand Dealer - Auto"),
                                  selected="Home Improvement Contractor"),
-                    width=2
+                    width=3
                   ),
                   mainPanel(
                     h3("All Businesses", align="center"),
+                    span(textOutput("val_pass_rate_1"), style="font-size: 18px"),
                     plotOutput("plot_pass_rate_1"),
                     hr(),
                     h3("All Businesses", align="center"),
+                    span(textOutput("val_pass_rate_2"), style="font-size: 18px"),
                     plotOutput("plot_pass_rate_2")
                   ))
               )
