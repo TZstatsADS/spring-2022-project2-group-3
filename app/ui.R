@@ -28,12 +28,12 @@ shinyUI(dashboardPage(
   dashboardSidebar(
     sidebarMenu(
       menuItem("Home", tabName="home", icon=icon("home")),
-      menuItem("MAP", tabName="map", icon=icon("map")),
+      menuItem("Map", tabName="map", icon=icon("map")),
       menuItem("Interactive Plots", tabName="plots", icon=icon("signal"),
                startExpanded=TRUE,
                menuSubItem("New application", tabName="new_app"),
                menuSubItem("Processing Time", tabName="proc_time"),
-               menuSubItem("Pass Rate", tabName="pass_rate")
+               menuSubItem("Passing Rate", tabName="pass_rate")
                #ADD CONTENT XXXXXXXXXXXXXX
                ),
       menuItem("Findings", tabName="findings", icon=icon("star"))
@@ -79,6 +79,18 @@ shinyUI(dashboardPage(
                                  choices=list("All"=1, "New Application"=2,
                                                  "Renewal"=3)
                                 ),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
                     radioButtons("category", label=h3("Business Category"),
                                  choices=list("Home Improvement Contractor",
                                               "Tobacco Retail Dealer",
@@ -91,21 +103,68 @@ shinyUI(dashboardPage(
                                               "Electronic & Appliance Service",
                                               "Dealer In Products",
                                               "Pawnbroker",
-                                              "Secondhand Dealer - Auto"))
+                                              "Secondhand Dealer - Auto")),
+                    width=3
                   ),
                 mainPanel(
+                  h3("All Businesses", align="center"),
+                  span(textOutput("val_proc_time_1"), style="font-size: 18px"),
                   plotOutput("plot_proc_time_1"),
+                  hr(),
+                  h3("Business-type Specific", align="center"),
+                  span(textOutput("val_proc_time_2"), style="font-size: 18px"),
                   plotOutput("plot_proc_time_2")
                 ))
-                #ADD CONTENT XXXXXXXXXXXXXX
               )
       ),
       
       #---------pass_rate----------
       tabItem(tabName="pass_rate",
               fluidPage(
-                h3("XXXXXXXXXXX", align="center")
-                #ADD CONTENT XXXXXXXXXXXXXX
+                sidebarLayout(
+                  sidebarPanel(
+                    radioButtons("app_or_renew_1", 
+                                 label=h3("Type of Application"),
+                                 choices=list("All"=1, "New Application"=2,
+                                              "Renewal"=3),
+                                 selected=1),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    br(),
+                    radioButtons("category_1", label=h3("Business Category"),
+                                 choices=list("Home Improvement Contractor",
+                                              "Tobacco Retail Dealer",
+                                              "Secondhand Dealer - General",
+                                              "Electronic Cigarette Dealer",
+                                              "Laundries",
+                                              "Electronics Store",
+                                              "Stoop Line Stand",
+                                              "Garage",
+                                              "Electronic & Appliance Service",
+                                              "Dealer In Products",
+                                              "Pawnbroker",
+                                              "Secondhand Dealer - Auto"),
+                                 selected="Home Improvement Contractor"),
+                    width=3
+                  ),
+                  mainPanel(
+                    h3("All Businesses", align="center"),
+                    span(textOutput("val_pass_rate_1"), style="font-size: 18px"),
+                    plotOutput("plot_pass_rate_1"),
+                    hr(),
+                    h3("All Businesses", align="center"),
+                    span(textOutput("val_pass_rate_2"), style="font-size: 18px"),
+                    plotOutput("plot_pass_rate_2")
+                  ))
               )
       ),
       
