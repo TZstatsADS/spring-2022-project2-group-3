@@ -24,7 +24,44 @@ if (!require("shinydashboard")) {
   library(shinydashboard)
 }
 
+if (!require("plotly")) install.packages("plotly")
+if (!require("viridis")) install.packages("viridis")
+if (!require("hrbrthemes")) install.packages("hrbrthemes")
+library(plotly)
+library(viridis)
+library(hrbrthemes)
 
+var = c("Auction House Premises","Auctioneer","Cabaret","Dealer In Products"            
+        ,"Debt Collection Agency",         "Electronic & Appliance Service"
+        ,"Electronics Store",          "Employment Agency"             
+        ,"Games of Chance",                "Garage"                        
+        ,"Garage and Parking Lot"  ,       "General Vendor"                
+        ,"Home Improvement Contractor" ,   "Home Improvement Salesperson"  
+        ,"Laundries"         ,             "Laundry"                       
+        , "Laundry Jobber"     ,            "Locksmith"                     
+        , "Newsstand"        ,              "Parking Lot"                   
+        , "Pawnbroker"       ,              "Pedicab Driver"                
+        , "Process Server Individual" ,    "Scrap Metal Processor"         
+        , "Secondhand Dealer - Auto"  ,     "Secondhand Dealer - General"   
+        , "Sidewalk Cafe"        ,          "Sightseeing Guide"             
+        , "Special Sale"      ,             "Stoop Line Stand"              
+        , "Temporary Street Fair Vendor" ,  "Ticket Seller"                 
+        , "Tobacco Retail Dealer" ,         "Tow Truck Company"             
+        , "Tow Truck Driver"    ,           "Commercial Lessor"             
+        , "Pedicab Business"   ,            "Scale Dealer Repairer"         
+        , "Amusement Device Temporary" ,    "Catering Establishment"        
+        , "Horse Drawn Cab Owner" ,         "Horse Drawn Driver"            
+        , "Amusement Arcade"    ,           "Amusement Device Portable"     
+        , "Amusement Device Permanent" ,    "Car Wash"                      
+        , "Locksmith Apprentice"  ,         "Process Serving Agency"        
+        , "General Vendor Distributor"  ,   "Storage Warehouse"             
+        , "Booting Company"    ,            "Pool or Billiard Room"         
+        , "Sightseeing Bus"    ,            "Secondhand Dealer - Firearms"  
+        , "Gaming Cafe"       ,             "Ticket Seller Business"        
+        , "Tow Truck Exemption"   ,         "Electronic Cigarette Dealer"   
+        , "Bingo Game Operator"   ,         "Third Party Food Delivery"   )
+
+yr <- c("2022","2021","2020","2019","2018","2017")
 
 shinyUI(
   navbarPage(strong("License Application Study",style="color: white;"), theme=shinytheme("cerulean"), 
@@ -82,10 +119,48 @@ shinyUI(
                      )
              ),
              
-             #---------new_app---------
+             #---------new_app----------
              tabItem(tabName="new_app",
                      fluidPage(
-                       h3("XXXXXXXXXXX", align="center")
+                       titlePanel("Applications of Different License Category"),
+                       
+                       tabsetPanel(
+                         tabPanel("Overall",  
+                                  sidebarLayout(
+                                    position="left",
+                                    sidebarPanel(
+                                      selectInput("app_year",label = "Select year", choices = yr, selected = "2017", multiple = F),
+                                      selectInput("app_category", label= "Select a License Category", choices = var,
+                                                  selected = "Home Improvement Contractor", multiple = F),
+                                      checkboxGroupInput("app_action",label = c("Actions"),
+                                                         choices =c("All","Application","Renewal"),
+                                                         selected = "All")
+                                    ),
+                                    
+                                    mainPanel(plotOutput("app_hist"),
+                                              plotOutput('app_plot',hover  = "plot_hover"),
+                                              verbatimTextOutput("app_info"))
+                                  )
+                         ), #tabpanel1
+                         
+                         tabPanel("Application vs Covid",
+                                  sidebarLayout(
+                                    position = "left",
+                                    sidebarPanel(
+                                      selectInput("app_category2", label= "Select a License Category", choices = var,
+                                                  selected = "Home Improvement Contractor", multiple = F)
+                                    )
+                                    
+                                    ,
+                                    mainPanel(plotlyOutput('app_plot1'),
+                                              #label = "Average Applications per Month"
+                                              textOutput("app_text"),
+                                              verbatimTextOutput("app_code"))
+                                    
+                                  )
+                         ) #tabpanel 2
+                       )#tabsetpanel
+                       
                        #ADD CONTENT XXXXXXXXXXXXXX
                      )
              ),
