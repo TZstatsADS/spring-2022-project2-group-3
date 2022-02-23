@@ -2,9 +2,10 @@
 
 ### [Project Description](doc/project2_desc.md)
 
-![screenshot](doc/figs/map.jpg)
+![screenshot](doc/figs/map2.png)
 
-In this second project of GR5243 Applied Data Science, we develop a *Exploratory Data Analysis and Visualization* shiny app on the work of a **NYC government agency/program** of your choice using NYC open data released on the [NYC Open Data By Agency](https://opendata.cityofnewyork.us/data/) website. In particular, many agencies have adjusted their work or rolled out new programs due to COVID, your app should provide ways for a user to explore quantiative measures of how covid has impacted daily life in NYC from different prospectives. See [Project 2 Description](doc/project2_desc.md) for more details.  
+Until today, the pandemic has been lasted around 2 years. During this period, how people's life were changed? Would the pandemic affect people's decision about operating business heavily? 
+In this project, we develop an *Exploratory Data Analysis and Visulization* shiny app on the [License Application](https://data.cityofnewyork.us/Business/License-Applications/ptev-4hud) dataset released on the [NYC Open Data By Agency](https://opendata.cityofnewyork.us/data/) website. From the applications of DCA Licenses, we can explore the number of newly invested business and the ones returned in NYC. In more depth, we can also explore the situations of each category and different business types. By combining data from license application and the pandemic Covid-19, we further investigate how the pandemic affects business applications and operations.
 
 The **learning goals** for this project is:
 
@@ -16,18 +17,16 @@ The **learning goals** for this project is:
 
 *The above general statement about project 2 can be removed once you are finished with your project. It is optional.
 
-## Project Title Lorem ipsum dolor sit amet
+##
 Term: Spring 2022
++ Group 3
++ **How does people's passion for business dynamically change with Covid-19?**:
+	+ Guosheng Cai
+	+ Sibo Geng
+	+ Ke Liu
+	+ Xubo Wang
 
-+ Team #
-+ **Projec title**: + Team members
-	+ team member 1
-	+ team member 2
-	+ team member 3
-	+ team member 4
-	+ team member 5
-
-+ **Project summary**: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
++ **Project summary**: In this project, we have developed a shiny app that can explore how business operations can be affected by Covid-19. We have discovered that at the beginning of the pandemic, there are evident data shown that the motivation of people starting a new business was decreased. However, as time elapsed, people have experienced several Covid-19 outbreaks and maybe have been used to it that people's passion about business has returned. 
 
 + **Contribution statement**: ([default](doc/a_note_on_contributions.md)) All team members contributed equally in all stages of this project. All team members approve our work presented in this GitHub repository including this contributions statement. 
 
