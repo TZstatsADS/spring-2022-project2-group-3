@@ -157,7 +157,7 @@ shinyServer(function(input, output) {
     
     # all data pre covid text
     output$val_proc_time_1_1 <- renderText({
-      paste("Since COVID-19: ", 
+      paste("Before COVID-19: ", 
             round(mean(data_proc_time_pre()$proc_time),0), " days",
             sep="")
     })
@@ -171,7 +171,7 @@ shinyServer(function(input, output) {
     
     # data by biz type text
     output$val_proc_time_2 <- renderText({
-      paste("The average processing time: ", 
+      paste("Average processing time: ", 
             round(mean(data_proc_time_cat()$proc_time),0), " days",
             sep="")
     })
@@ -275,7 +275,7 @@ shinyServer(function(input, output) {
     # output (texts)
     # all data text
     output$val_pass_rate_1 <- renderText({
-      paste("The average passing rate: ", 
+      paste("Average passing rate: ", 
             round(100*mean(data_pass_rate()$pass_rate),2), "%",
             sep="")
     })
@@ -289,14 +289,14 @@ shinyServer(function(input, output) {
     
     # all data after covid text
     output$val_pass_rate_1_2 <- renderText({
-      paste("After COVID-19: ", 
+      paste("Since COVID-19: ", 
             round(100*mean(data_pass_rate_after()$pass_rate),2), "%",
             sep="")
     })
     
     # data by biz type text
     output$val_pass_rate_2 <- renderText({
-      paste("The average passing rate is ", 
+      paste("Average passing rate: ", 
             round(100*mean(data_pass_rate_cat()$pass_rate),2), "%",
             sep="")
     })
@@ -310,7 +310,7 @@ shinyServer(function(input, output) {
     
     # data by biz type after covid text
     output$val_pass_rate_2_2 <- renderText({
-      paste("After COVID-19: ", 
+      paste("Since COVID-19: ", 
             round(100*mean(data_pass_rate_cat_after()$pass_rate),2), "%",
             sep="")
     })
