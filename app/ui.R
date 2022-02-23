@@ -85,27 +85,35 @@ shinyUI(dashboardPage(
               )
       ),
       
-      #---------proc_time----------
+      #---------proc_time (processing time) ----------
       tabItem(tabName="proc_time",
               fluidPage(
                 sidebarLayout(
                   sidebarPanel(
+                    
+                    # introduction of the content in the current tab
                     p(strong("In this tab, you can explore the the change in processing time for license applications."), 
                       style = "font-size:12pt; color:grey"),
                     p(strong("The top graph will demonstrate the the processing time for all types of businesses, while
                       you can choose a particular type of business to be displayed in bottom graph for comparison"),
                       style = "font-size:12pt; color:grey"),
                     hr(),
+                    
+                    # select the type of application
                     radioButtons("app_or_renew", 
                                  label=h3("Type of Application"),
                                  choices=list("All"=1, "New Application"=2,
                                                  "Renewal"=3)
                                 ),
+                    
+                    # show the average processing time (2017-2022, before COVID, and after COVID)
                     span(strong(textOutput("val_proc_time_1")), style="font-size:18px; color:orange"),
                     span(strong(textOutput("val_proc_time_1_1")), style="font-size:16px; color:blue"),
                     span(strong(textOutput("val_proc_time_1_2")), style="font-size:16px; color:blue"),
                     br(),
                     hr(),
+                    
+                    # select the type of biz
                     radioButtons("category", label=h3("Business Category"),
                                  choices=list("Home Improvement Contractor",
                                               "Tobacco Retail Dealer",
@@ -119,40 +127,54 @@ shinyUI(dashboardPage(
                                               "Dealer In Products",
                                               "Pawnbroker",
                                               "Secondhand Dealer - Auto")),
+                    
+                    # show the average processing time (2017-2022, before COVID, and after COVID)
                     span(strong(textOutput("val_proc_time_2")), style="font-size:18px; color:orange"),
                     span(strong(textOutput("val_proc_time_2_1")), style="font-size:16px; color:blue"),
                     span(strong(textOutput("val_proc_time_2_2")), style="font-size:16px; color:blue"),
+                    
                     width=3
                   ),
+                  
                 mainPanel(
+                  # display the graph for all biz
                   h2("All Businesses", align="center"),
                   plotOutput("plot_proc_time_1"),
+                  
+                  # display the graph for the selected type of biz
                   h2("Business-type Specific", align="center"),
                   plotOutput("plot_proc_time_2")
                 ))
               )
       ),
       
-      #---------pass_rate----------
+      #---------pass_rate (passing rate)----------
       tabItem(tabName="pass_rate",
               fluidPage(
                 sidebarLayout(
                   sidebarPanel(
+                    # introduction of the content in the current tab
                     p(strong("In this tab, you can explore the the change in passing rate for license applications."), 
                       style = "font-size:12pt; color:grey"),
                     p(strong("The top graph will demonstrate the the passing for all types of businesses, while
                       you can choose a particular type of business to be displayed in bottom graph for comparison"),
                       style = "font-size:12pt; color:grey"),
+                    
+                    # select the type of application
                     radioButtons("app_or_renew_1", 
                                  label=h3("Type of Application"),
                                  choices=list("All"=1, "New Application"=2,
                                               "Renewal"=3),
                                  selected=1),
+                    
+                    # show the average passing rate (2017-2022, before COVID, and after COVID)
                     span(strong(textOutput("val_pass_rate_1")), style="font-size: 18px; color:orange"),
                     span(strong(textOutput("val_pass_rate_1_1")), style="font-size:16px; color:blue"),
                     span(strong(textOutput("val_pass_rate_1_2")), style="font-size:16px; color:blue"),
                     br(),
                     hr(),
+                    
+                    # select the type of biz
                     radioButtons("category_1", label=h3("Business Category"),
                                  choices=list("Home Improvement Contractor",
                                               "Tobacco Retail Dealer",
@@ -167,14 +189,20 @@ shinyUI(dashboardPage(
                                               "Pawnbroker",
                                               "Secondhand Dealer - Auto"),
                                  selected="Home Improvement Contractor"),
+                    
+                    # show the average passing rate (2017-2022, before COVID, and after COVID)
                     span(strong(textOutput("val_pass_rate_2")), style="font-size: 18px; color:orange"),
                     span(strong(textOutput("val_pass_rate_2_1")), style="font-size:16px; color:blue"),
                     span(strong(textOutput("val_pass_rate_2_2")), style="font-size:16px; color:blue"),
+                    
                     width=3
                   ),
                   mainPanel(
+                    # display the graph for all biz
                     h2("All Businesses", align="center"),
                     plotOutput("plot_pass_rate_1"),
+                    
+                    # display the graph for the selected type of biz
                     h2("Business-type Specific", align="center"),
                     plotOutput("plot_pass_rate_2")
                   ))
