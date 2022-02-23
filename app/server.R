@@ -71,20 +71,34 @@ data = data_raw %>%
   filter(s_date >= as_date("01/01/2017",format = "%m/%d/%Y")) %>%
   filter(s_date < e_date)
 
-#Identifying major categories
-#cats = data %>% count(category) %>%
-#  filter(n>1000) %>%
-#  select(category)
-#data = data %>%
-#  filter(category %in% cats$category)
-
-
+data_pre = data %>%
+  filter(s_date < as_date("03/01/2020",format = "%m/%d/%Y"))
+  
+data_after = data %>%
+  filter(s_date > as_date("03/01/2020",format = "%m/%d/%Y"))
+  
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
 
     #---------proc_time----------
     data_proc_time <- reactive({
       dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew==3) filter(., app_or_renew=="Renewal") else .} %>%
+        summarize(proc_time=mean(difftime(e_date, s_date)))
+      return(dat)
+    })
+    
+    data_proc_time_pre <- reactive({
+      dat = data_pre %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew==3) filter(., app_or_renew=="Renewal") else .} %>%
+        summarize(proc_time=mean(difftime(e_date, s_date)))
+      return(dat)
+    })
+    
+    data_proc_time_after <- reactive({
+      dat = data_after %>% group_by(month = floor_date(s_date, "month")) %>%
         {if (input$app_or_renew==2) filter(., app_or_renew=="Application") else .} %>%
         {if (input$app_or_renew==3) filter(., app_or_renew=="Renewal") else .} %>%
         summarize(proc_time=mean(difftime(e_date, s_date)))
@@ -99,28 +113,68 @@ shinyServer(function(input, output) {
         summarize(proc_time=mean(difftime(e_date, s_date)))
       return(dat)
     })
-  
+    
+    data_proc_time_cat_pre <- reactive({
+      dat = data_pre %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew==3) filter(., app_or_renew=="Renewal") else .} %>%
+        filter(category==input$category) %>%
+        summarize(proc_time=mean(difftime(e_date, s_date)))
+      return(dat)
+    })
+    
+    data_proc_time_cat_after <- reactive({
+      dat = data_after %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew==3) filter(., app_or_renew=="Renewal") else .} %>%
+        filter(category==input$category) %>%
+        summarize(proc_time=mean(difftime(e_date, s_date)))
+      return(dat)
+    })
+    
     output$plot_proc_time_1 <- renderPlot({
       ggplot(data_proc_time(), aes(x=month, y=proc_time)) +
         geom_line(size=1.5) + xlab("Month") + 
-        ylab("Average Processing Time in Days")
+        ylab("Average Processing Time in Days") + theme_minimal()
     })
     
     output$val_proc_time_1 <- renderText({
-      paste("The average processing time is ", 
+      paste("Average processing time: ", 
             round(mean(data_proc_time()$proc_time),0), " days",
+            sep="")
+    })
+    
+    output$val_proc_time_1_1 <- renderText({
+      paste("Since COVID-19: ", 
+            round(mean(data_proc_time_pre()$proc_time),0), " days",
+            sep="")
+    })
+    
+    output$val_proc_time_1_2 <- renderText({
+      paste("Since COVID-19: ", 
+            round(mean(data_proc_time_after()$proc_time),0), " days", 
             sep="")
     })
     
     output$plot_proc_time_2 <- renderPlot({
       ggplot(data_proc_time_cat(), aes(x=month, y=proc_time)) +
         geom_line(size=1.5) + xlab("Month") + 
-        ylab("Average Processing Time in Days")
+        ylab("Average Processing Time in Days") +  theme_minimal()
     })
     
     output$val_proc_time_2 <- renderText({
-      paste("The average processing time is ", 
+      paste("The average processing time: ", 
             round(mean(data_proc_time_cat()$proc_time),0), " days",
+            sep="")
+    })
+    output$val_proc_time_2_1 <- renderText({
+      paste("Before COVID-19: ", 
+            round(mean(data_proc_time_cat_pre()$proc_time),0), " days",
+            sep="")
+    })
+    output$val_proc_time_2_2 <- renderText({
+      paste("Since COVID-19: ", 
+            round(mean(data_proc_time_cat_after()$proc_time),0), " days",
             sep="")
     })
     
@@ -136,8 +190,47 @@ shinyServer(function(input, output) {
       return(dat)
     })
     
+    data_pass_rate_pre <- reactive({
+      dat = data_pre %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew_1==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew_1==3) filter(., app_or_renew=="Renewal") else .} %>%
+        summarize(pass_rate = sum(status=="Issued")/(sum(status=="Issued")+
+                                                       sum(status=="Denied")))
+      return(dat)
+    })
+    
+    data_pass_rate_after <- reactive({
+      dat = data_after %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew_1==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew_1==3) filter(., app_or_renew=="Renewal") else .} %>%
+        summarize(pass_rate = sum(status=="Issued")/(sum(status=="Issued")+
+                                                       sum(status=="Denied")))
+      return(dat)
+    })
+    
+    
     data_pass_rate_cat <- reactive({
       dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew_1==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew_1==3) filter(., app_or_renew=="Renewal") else .} %>%
+        filter(category==input$category_1) %>%
+        summarize(pass_rate = sum(status=="Issued")/(sum(status=="Issued")+
+                                                       sum(status=="Denied")))
+      return(dat)
+    })
+    
+    data_pass_rate_cat_pre <- reactive({
+      dat = data_pre %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew_1==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew_1==3) filter(., app_or_renew=="Renewal") else .} %>%
+        filter(category==input$category_1) %>%
+        summarize(pass_rate = sum(status=="Issued")/(sum(status=="Issued")+
+                                                       sum(status=="Denied")))
+      return(dat)
+    })
+    
+    data_pass_rate_cat_after <- reactive({
+      dat = data_after %>% group_by(month = floor_date(s_date, "month")) %>%
         {if (input$app_or_renew_1==2) filter(., app_or_renew=="Application") else .} %>%
         {if (input$app_or_renew_1==3) filter(., app_or_renew=="Renewal") else .} %>%
         filter(category==input$category_1) %>%
@@ -149,12 +242,26 @@ shinyServer(function(input, output) {
     output$plot_pass_rate_1 <- renderPlot({
       ggplot(data_pass_rate(), aes(x=month, y=pass_rate)) +
         geom_line(size=1.5) + xlab("Month") + 
-        ylab("Average Passing Rate")
+        ylab("Average Passing Rate") + theme_minimal()
     })
     
+    
+    
     output$val_pass_rate_1 <- renderText({
-      paste("The average passing rate is ", 
+      paste("The average passing rate: ", 
             round(100*mean(data_pass_rate()$pass_rate),2), "%",
+            sep="")
+    })
+    
+    output$val_pass_rate_1_1 <- renderText({
+      paste("Before COVID-19: ", 
+            round(100*mean(data_pass_rate_pre()$pass_rate),2), "%",
+            sep="")
+    })
+    
+    output$val_pass_rate_1_2 <- renderText({
+      paste("After COVID-19: ", 
+            round(100*mean(data_pass_rate_after()$pass_rate),2), "%",
             sep="")
     })
     
@@ -162,7 +269,7 @@ shinyServer(function(input, output) {
     output$plot_pass_rate_2 <- renderPlot({
       ggplot(data_pass_rate_cat(), aes(x=month, y=pass_rate)) +
         geom_line(size=1.5) + xlab("Month") + 
-        ylab("Average Passing Rate")
+        ylab("Average Passing Rate") + theme_minimal()
     })
     
     output$val_pass_rate_2 <- renderText({
@@ -171,7 +278,19 @@ shinyServer(function(input, output) {
             sep="")
     })
     
+    output$val_pass_rate_2_1 <- renderText({
+      paste("Before COVID-19: ", 
+            round(100*mean(data_pass_rate_cat_pre()$pass_rate),2), "%",
+            sep="")
+    })
     
+    output$val_pass_rate_2_2 <- renderText({
+      paste("After COVID-19: ", 
+            round(100*mean(data_pass_rate_cat_after()$pass_rate),2), "%",
+            sep="")
+    })
+    
+
 })
 
 
