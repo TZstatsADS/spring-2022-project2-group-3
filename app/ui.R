@@ -45,7 +45,8 @@ shinyUI(
                       startExpanded=TRUE,
                       menuSubItem("New application", tabName="new_app"),
                       menuSubItem("Processing Time", tabName="proc_time"),
-                      menuSubItem("Passing Rate", tabName="pass_rate")
+                      menuSubItem("Passing Rate", tabName="pass_rate"),
+                      menuSubItem("Time Series", tabName = "time_series")
                       #ADD CONTENT XXXXXXXXXXXXXX
              ),
              menuItem("Findings", tabName="findings", icon=icon("star"))
@@ -81,14 +82,13 @@ shinyUI(
                      )
              ),
              
-             #---------new_app----------
+             #---------new_app---------
              tabItem(tabName="new_app",
                      fluidPage(
                        h3("XXXXXXXXXXX", align="center")
                        #ADD CONTENT XXXXXXXXXXXXXX
                      )
              ),
-             
              #---------proc_time (processing time) ----------
              tabItem(tabName="proc_time",
                      fluidPage(
@@ -212,6 +212,33 @@ shinyUI(
                          ))
                      )
              ),
+             #---------time series----------
+             tabItem(tabName="time_series",
+                     fluidPage(
+                       
+                       titlePanel("Time Series Analysis"),
+                       
+                       sidebarPanel(
+                         
+                         selectInput('ts_input1', 'Year',
+                                     choices = c('All','2017','2018','2019','2020','2021','2022'),
+                                     selected = 'All'),
+                         selectInput('ts_input2', "License Type",
+                                     choices = c('All','Business','Individual'),
+                                     selected = 'All'),
+                         selectInput('ts_input3', "Category",
+                                     choices = c('All','Application or Renew','Application Categoty'),
+                                     selected = 'All'),
+                         
+                       ),
+                       
+                       mainPanel(
+                         h2("Time Series Analysis Plot", align="center"),
+                         plotOutput('ts_plot')
+                       )
+                     )
+             ),
+             
              
              #---------findings----------
              tabItem(tabName="findings",

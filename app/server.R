@@ -52,6 +52,11 @@ if (!require("lubridate")) {
     library(lubridate)
 }
 
+if (!require("ggpubr")) {
+    install.packages("ggpubr")
+    library(ggpubr)
+}
+
 heatPlugin <- htmlDependency("Leaflet.heat", "99.99.99",
              src = c(href = "http://leaflet.github.io/Leaflet.heat/dist/"),
              script = "leaflet-heat.js")
@@ -62,7 +67,12 @@ registerPlugin <- function(map, plugin) {
 
 
 
-data_raw = read.csv('../data/License_Applications.csv')
+data_raw = read.csv('./data/License_Applications.csv')
+
+df_ts <- data_raw %>% mutate(Start.Date = mdy(Start.Date), End.Date = mdy(End.Date))
+df_ts <- df_ts %>% filter(year(Start.Date) >= 2017, State == 'NY')
+df_ts <- df_ts %>% select(Application.ID, Start.Date, License.Type, Application.or.Renewal, Status, Application.Category)
+
 data = data_raw %>%
     select(ID="Application.ID", l_type="License.Type", 
            app_or_renew="Application.or.Renewal", status="Status",
@@ -84,6 +94,13 @@ data_pre = data %>%
 
 data_after = data %>%
     filter(s_date > as_date("03/01/2020",format = "%m/%d/%Y"))
+
+Covid_19_raw <- read_csv("data/COVID-19.csv")
+
+covid_ts <- Covid_19_raw %>% select(DATE_OF_INTEREST,CASE_COUNT) %>%
+    mutate(DATE_OF_INTEREST = mdy(DATE_OF_INTEREST)) %>%
+    rename(date = DATE_OF_INTEREST, case = CASE_COUNT)
+
 
 shinyServer(function(input, output) {
     output$left_map <- renderLeaflet(
@@ -139,6 +156,7 @@ shinyServer(function(input, output) {
                 setView(-73.9824,40.7364,zoom = 12) %>%
                 addWebGLHeatmap(~longitude, ~latitude, size = 200, alphaRange = 0.5, intensity = 0.1)
         })
+    
     
     #---------proc_time (processing time)----------
     
@@ -381,5 +399,162 @@ shinyServer(function(input, output) {
         paste("Since COVID-19: ", 
               round(100*mean(data_pass_rate_cat_after()$pass_rate),2), "%",
               sep="")
+    })
+    
+    # ts_plot
+    output$ts_plot <- renderPlot({
+        
+        year = input$ts_input1
+        license = input$ts_input2
+        category = input$ts_input3
+        
+        aorr <- df_ts %>% select(Start.Date, Application.or.Renewal)
+        ac <- df_ts %>% select(Start.Date, Application.Category)
+        lic <- df_ts %>% filter(License.Type == license) %>%
+            select(Start.Date, Application.Category, Application.or.Renewal)
+        
+        if (year == 'All'){
+            covid_1 <- covid_ts %>% 
+                mutate(date = format(as.Date(date),'%Y-%m'), case = case/100) %>%
+                group_by(date) %>%
+                mutate(n = sum(case)) %>%
+                select(date, n) %>%
+                unique()
+            if (license == "All") {
+                if (category == "All") {
+                    df_0 <- df_ts %>% mutate(Start.Date = format(as.Date(Start.Date),'%Y-%m')) %>%
+                        select(Start.Date)
+                    
+                    ggplot() + geom_bar(data = df_0, aes(x = Start.Date), fill = '#6699CC') + 
+                        geom_line(data = covid_1, aes(x = date, y = n, group = 1),size = 1.2, color = '#FFCC99')+
+                        geom_point(data = covid_1, aes(x = date, y = n, group = 1), size = 1.2, color = '#FFCC99')
+                }
+                else if (category == "Application or Renew") {
+                    
+                    
+                    aorr_0 <- aorr %>% mutate(Start.Date = format(as.Date(Start.Date),'%Y-%m'))
+                    
+                    ggplot() + geom_bar(data = aorr_0, aes(x = Start.Date, fill = Application.or.Renewal)) + scale_fill_brewer() +
+                        geom_line(data = covid_1, aes(x = date, y = n, group = 1),size = 1.2, color = '#FFCC99')+
+                        geom_point(data = covid_1, aes(x = date, y = n, group = 1), size = 1.2, color = '#FFCC99')
+                }
+                
+                else {
+                    ac_0 <- ac %>% mutate(Start.Date = format(as.Date(Start.Date),'%Y-%m'))
+                    
+                    ggplot() + geom_bar(data = ac_0, aes(x = Start.Date, fill = Application.Category)) + scale_fill_brewer() +
+                        geom_line(data = covid_1, aes(x = date, y = n, group = 1),size = 1.2, color = '#FFCC99')+
+                        geom_point(data = covid_1, aes(x = date, y = n, group = 1), size = 1.2, color = '#FFCC99')
+                }
+            }
+            
+            else {
+                lic <- lic %>% mutate(Start.Date = format(as.Date(Start.Date),'%Y-%m'))
+                if (category == "All") {
+                    ggplot() + geom_bar(data = lic, aes(x = Start.Date), fill = '#6699CC') + 
+                        geom_line(data = covid_1, aes(x = date, y = n, group = 1),size = 1.2, color = '#FFCC99')+
+                        geom_point(data = covid_1, aes(x = date, y = n, group = 1), size = 1.2, color = '#FFCC99')
+                }
+                else if (category == "Application or Renew") {
+                    ggplot() + geom_bar(data = lic, aes(x = Start.Date, fill = Application.or.Renewal)) + scale_fill_brewer() +
+                        geom_line(data = covid_1, aes(x = date, y = n, group = 1),size = 1.2, color = '#FFCC99')+
+                        geom_point(data = covid_1, aes(x = date, y = n, group = 1), size = 1.2, color = '#FFCC99')
+                }
+                else {
+                    ggplot() + geom_bar(data = lic, aes(x = Start.Date, fill = Application.Category)) + scale_fill_brewer() +
+                        geom_line(data = covid_1, aes(x = date, y = n, group = 1),size = 1.2, color = '#FFCC99')+
+                        geom_point(data = covid_1, aes(x = date, y = n, group = 1), size = 1.2, color = '#FFCC99')
+                }
+            }
+        }
+        
+        else if (strtoi(year) >= 2017 && strtoi(year) <= 2019) {
+            df_year <- df_ts %>% filter(year(Start.Date) == strtoi(year)) %>%
+                mutate(Start.Date = format(as.Date(Start.Date),'%Y-%m')) %>%
+                select(Start.Date)
+            if (license == "All") {
+                if (category == "All") {
+                    ggplot() + geom_bar(data = df_year, aes(x = Start.Date),fill = '#6699CC')
+                }
+                else if (category == "Application or Renew"){
+                    aorr_year <- aorr %>% filter(year(Start.Date) == strtoi(year)) %>%
+                        mutate(Start.Date = format(as.Date(Start.Date),'%Y-%m'))
+                    ggplot() + geom_bar(data = aorr_year, aes(x = Start.Date, fill = Application.or.Renewal)) + scale_fill_brewer()
+                }
+                else {
+                    ac_year <- ac %>% filter(year(Start.Date) == strtoi(year)) %>%
+                        mutate(Start.Date = format(as.Date(Start.Date),'%Y-%m'))
+                    ggplot() + geom_bar(data = ac_year, aes(x = Start.Date, fill = Application.Category)) + scale_fill_brewer()
+                }
+            }
+            
+            else {
+                lic_year <- lic %>% filter(year(Start.Date) == strtoi(year)) %>%
+                    mutate(Start.Date = format(as.Date(Start.Date),'%Y-%m'))
+                if (category == "All") {
+                    ggplot() + geom_bar(data = lic_year, aes(x = Start.Date),fill = '#6699CC')
+                }
+                else if (category == "Application or Renew"){
+                    ggplot() + geom_bar(data = lic_year, aes(x = Start.Date, fill = Application.or.Renewal)) + scale_fill_brewer()
+                }
+                else {
+                    ggplot() + geom_bar(data = lic_year, aes(x = Start.Date, fill = Application.Category)) + scale_fill_brewer()
+                }
+            }
+        }
+        
+        else {
+            df_year <- df_ts %>% filter(year(Start.Date) == strtoi(year)) %>%
+                mutate(Start.Date = format(as.Date(Start.Date),'%Y-%m')) %>%
+                select(Start.Date)
+            covid_year <- covid_ts %>% filter(year(date) == strtoi(year)) %>%
+                mutate(date = format(as.Date(date),'%Y-%m'), case = case/100) %>%
+                group_by(date) %>%
+                mutate(n = sum(case)) %>%
+                select(date, n) %>%
+                unique()
+            if (license == "All") {
+                if (category == "All") {
+                    ggplot() + geom_bar(data = df_year, aes(x = Start.Date),fill = '#6699CC') +
+                        geom_line(data = covid_year, aes(x = date, y = n, group = 1),size = 1.2, color = '#FFCC99')+
+                        geom_point(data = covid_year, aes(x = date, y = n, group = 1), size = 1.2, color = '#FFCC99')
+                }
+                else if (category == "Application or Renew"){
+                    aorr_year <- aorr %>% filter(year(Start.Date) == strtoi(year)) %>%
+                        mutate(Start.Date = format(as.Date(Start.Date),'%Y-%m'))
+                    ggplot() + geom_bar(data = aorr_year, aes(x = Start.Date, fill = Application.or.Renewal)) + scale_fill_brewer() +
+                        geom_line(data = covid_year, aes(x = date, y = n, group = 1),size = 1.2, color = '#FFCC99')+
+                        geom_point(data = covid_year, aes(x = date, y = n, group = 1), size = 1.2, color = '#FFCC99')
+                }
+                else {
+                    ac_year <- ac %>% filter(year(Start.Date) == strtoi(year)) %>%
+                        mutate(Start.Date = format(as.Date(Start.Date),'%Y-%m'))
+                    ggplot() + geom_bar(data = ac_year, aes(x = Start.Date, fill = Application.Category)) + scale_fill_brewer() +
+                        geom_line(data = covid_year, aes(x = date, y = n, group = 1),size = 1.2, color = '#FFCC99')+
+                        geom_point(data = covid_year, aes(x = date, y = n, group = 1), size = 1.2, color = '#FFCC99')
+                }
+            }
+            
+            else {
+                lic_year <- lic %>% filter(year(Start.Date) == strtoi(year)) %>%
+                    mutate(Start.Date = format(as.Date(Start.Date),'%Y-%m'))
+                if (category == "All") {
+                    ggplot() + geom_bar(data = lic_year, aes(x = Start.Date),fill = '#6699CC') +
+                        geom_line(data = covid_year, aes(x = date, y = n, group = 1),size = 1.2, color = '#FFCC99')+
+                        geom_point(data = covid_year, aes(x = date, y = n, group = 1), size = 1.2, color = '#FFCC99')
+                }
+                else if (category == "Application or Renew"){
+                    ggplot() + geom_bar(data = lic_year, aes(x = Start.Date, fill = Application.or.Renewal)) + scale_fill_brewer() +
+                        geom_line(data = covid_year, aes(x = date, y = n, group = 1),size = 1.2, color = '#FFCC99')+
+                        geom_point(data = covid_year, aes(x = date, y = n, group = 1), size = 1.2, color = '#FFCC99')
+                }
+                else {
+                    ggplot() + geom_bar(data = lic_year, aes(x = Start.Date, fill = Application.Category)) + scale_fill_brewer() +
+                        geom_line(data = covid_year, aes(x = date, y = n, group = 1),size = 1.2, color = '#FFCC99')+
+                        geom_point(data = covid_year, aes(x = date, y = n, group = 1), size = 1.2, color = '#FFCC99')
+                }
+            }
+        }
+        
     })
 })
