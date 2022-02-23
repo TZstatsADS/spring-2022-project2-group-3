@@ -11,64 +11,51 @@ if (!require("shinythemes")) {
   install.packages("shinythemes")
   library(shinythemes)
 }
-if (!require("leaflet")) {
-  install.packages("leaflet")
-  library(leaflet)
-}
-if (!require("leaflet.extras")) {
-  install.packages("leaflet.extras")
-  library(leaflet.extras)
-}
+
 
 # Define UI for application that draws a histogram
 shinyUI(
-    navbarPage(strong("Citi Bike Study",style="color: white;"), 
-               theme=shinytheme("cerulean"), # select your themes https://rstudio.github.io/shinythemes/
-#------------------------------- tab panel - Maps ---------------------------------
-                tabPanel("Maps",
-                         icon = icon("map-marker-alt"), #choose the icon for
-                         div(class = 'outer',
-                        # side by side plots
-                        fluidRow(
-                                splitLayout(cellWidths = c("50%", "50%"), 
-                                             leafletOutput("left_map",width="100%",height=1200),
-                                             leafletOutput("right_map",width="100%",height=1200))),
-                        #control panel on the left
-                        absolutePanel(id = "control", class = "panel panel-default", fixed = TRUE, draggable = TRUE,
-                                      top = 200, left = 50, right = "auto", bottom = "auto", width = 250, height = "auto",
-                                      tags$h4('Citi Bike Activity Comparison'), 
-                                      tags$br(),
-                                      tags$h5('Pre-covid(Left) Right(Right)'), 
-                                      prettyRadioButtons(
-                                                      inputId = "adjust_score",
-                                                      label = "Score List:", 
-                                                      choices = c("start_cnt", 
-                                                                  "end_cnt", 
-                                                                  "day_diff_absolute",
-                                                                  "day_diff_percentage"),
-                                                      inline = TRUE, 
-                                                      status = "danger",
-                                                      fill = TRUE
-                                                        ),
-                                      awesomeRadio("adjust_time", 
-                                                   label="Time",
-                                                    choices =c("Overall",
-                                                               "Weekday", 
-                                                               "Weekend"), 
-                                                    selected = "Overall",
-                                                    status = "warning"),
-                                      # selectInput('adjust_weather',
-                                      #             label = 'Adjust for Weather',
-                                      #             choices = c('Yes','No'), 
-                                      #             selected = 'Yes'
-                                      #             ),
-                                      style = "opacity: 0.80"
-                                      
-                                ), #Panel Control - Closing
-                            ) #Maps - Div closing
-                        ) #tabPanel maps closing
-   
-
-
-    ) #navbarPage closing  
+  fluidPage(
+    titlePanel("Applications of Different License Category"),
+    
+    tabsetPanel(
+      tabPanel("Overall",  
+               sidebarLayout(
+                 position="left",
+                 sidebarPanel(
+                   selectInput("year",label = "Select year", choices = yr, selected = "2017", multiple = F),
+                   selectInput("category", label= "Select a License Category", choices = var,
+                               selected = "Home Improvement Contractor", multiple = F),
+                   checkboxGroupInput("action",label = c("Actions"),
+                                      choices =c("All","Application","Renewal"),
+                                      selected = "All")
+                 ),
+                 
+                 mainPanel(plotOutput("hist"),
+                           plotOutput('plot',hover  = "plot_hover"),
+                           verbatimTextOutput("info"))
+               )
+      ), #tabpanel1
+      
+      tabPanel("Application vs Covid",
+               sidebarLayout(
+                 position = "left",
+                 sidebarPanel(
+                   selectInput("category2", label= "Select a License Category", choices = var,
+                               selected = "Home Improvement Contractor", multiple = F)
+                 )
+                 
+                 ,
+                 mainPanel(plotlyOutput('plot1'),
+                           #label = "Average Applications per Month"
+                           textOutput("text"),
+                           verbatimTextOutput("code"))
+                 
+               )
+        ) #tabpanel 2
+     )#tabsetpanel
+    
+    
+  ) #fluidpage closing
+  
 ) #Shiny UI closing    
