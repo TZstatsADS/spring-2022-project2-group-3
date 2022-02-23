@@ -1,12 +1,4 @@
-#
-# This is the server logic of a Shiny web application. You can run the
-# application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-###############################Install Related Packages #######################
+# install required libraries 
 if (!require("shiny")) {
     install.packages("shiny")
     library(shiny)
@@ -36,168 +28,293 @@ if (!require("leafsync")) {
     library(leafsync)
 }
 
-#Data Processing
-total_citi_bike_df = read.csv('../data/citibike_data.csv')
-##compute the daily in and out difference for the station
-total_citi_bike_df$day_diff = total_citi_bike_df$endcount - total_citi_bike_df$startcount
-#assign each column to weekend or weekday
-total_citi_bike_df$weekend_or_weekday = ifelse(total_citi_bike_df$weekday %in% c('Saturday','Sunday'), "Weekend", "Weekday")
+if (!require("tidyverse")) {
+  install.packages("tidyverse")
+  library(tidyverse)
+}
 
-#station info
-citi_bike_station_info <- total_citi_bike_df[,c('station_id','station_name','station_longitude','station_latitude')]
-#remove the duplicates based on station id 
-citi_bike_station_info <- citi_bike_station_info[!duplicated(citi_bike_station_info[ , c("station_id")]),]
+if (!require("ggplot2")) {
+  install.packages("ggplot2")
+  library(ggplot2)
+}
 
-#split the bike data to pre-covid and covid time period
-citi_bike_pre_covid_df = total_citi_bike_df[difftime(total_citi_bike_df$date,"2019-05-31")<=0,] #2019-05-01 ~ 2019-05-31
-citi_bike_covid_df = total_citi_bike_df[difftime(total_citi_bike_df$date,"2020-04-30")>=0,] #2020-05-01 ~ 2021-05-31
+if (!require("lubridate")) {
+  install.packages("lubridate")
+  library(lubridate)
+}
 
+# data loading
+data_raw = read.csv('../data/License_Applications.csv')
 
-# Define server logic required to draw a histogram
+# data processing
+data = data_raw %>%
+  select(ID="Application.ID", l_type="License.Type", 
+         app_or_renew="Application.or.Renewal", status="Status",
+         s_date="Start.Date", e_date="End.Date",
+         category="License.Category", app_cat="Application.Category",
+         city="City", state="State", zip="Zip", longitute="Longitude", 
+         latitude="Latitude") %>%
+  drop_na() %>%
+  mutate(s_date = 
+           as_date(s_date, format = "%m/%d/%Y")) %>%
+  mutate(e_date = 
+           as_date(e_date, format = "%m/%d/%Y")) %>%
+  filter(state=="NY") %>% 
+  filter(s_date >= as_date("01/01/2017",format = "%m/%d/%Y")) %>%
+  filter(s_date < e_date)
+
+data_pre = data %>%
+  filter(s_date < as_date("03/01/2020",format = "%m/%d/%Y"))
+  
+data_after = data %>%
+  filter(s_date > as_date("03/01/2020",format = "%m/%d/%Y"))
+  
+# define the server logic
 shinyServer(function(input, output) {
 
-    ## Map Tab section
+    #---------proc_time (processing time)----------
     
-    output$left_map <- renderLeaflet({
+  # create appropriate data in accordance with the user input
+    # all data
+    data_proc_time <- reactive({
+      dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew==3) filter(., app_or_renew=="Renewal") else .} %>%
+        summarize(proc_time=mean(difftime(e_date, s_date)))
+      return(dat)
+    })
     
-    #adjust for weekday/weekend effect
-    if (input$adjust_time =='Overall') {
-        leaflet_plt_df <- citi_bike_pre_covid_df %>% 
-                            group_by(station_id) %>%
-                            summarise(total_start_count = sum(startcount),
-                                      total_end_count = sum(endcount),
-                                      total_day_diff = sum(day_diff),
-                                      total_diff_percentage = sum(day_diff)/sum(startcount),
-                            ) %>% left_join(citi_bike_station_info,by='station_id')
-    } else {
-        leaflet_plt_df <- citi_bike_pre_covid_df %>% 
-                            filter(weekend_or_weekday == input$adjust_time) %>%
-                            group_by(station_id) %>%
-                                summarise(total_start_count = sum(startcount),
-                                          total_end_count = sum(endcount),
-                                          total_day_diff = sum(day_diff),
-                                          total_diff_percentage = sum(day_diff)/sum(startcount),
-                                ) %>% left_join(citi_bike_station_info,by='station_id')
-                            } 
-
-        
-    map_2019 <- leaflet_plt_df %>%
-         leaflet(options = leafletOptions(minZoom = 11, maxZoom = 13)) %>%
-         addTiles() %>%
-         addProviderTiles("CartoDB.Positron",
-                          options = providerTileOptions(noWrap = TRUE)) %>%
-         setView(-73.9834,40.7504,zoom = 12)
-     
-     if (input$adjust_score == 'start_cnt') {
-         map_2019 %>%
-             addHeatmap(
-                        lng=~station_longitude,
-                        lat=~station_latitude,
-                        intensity=~total_start_count,
-                        max=4000,
-                        radius=8,
-                        blur=10)
-     }else if (input$adjust_score == 'end_cnt') {
-         map_2019 %>%
-             addHeatmap(
-                        lng=~station_longitude,
-                        lat=~station_latitude,
-                        intensity=~total_end_count,
-                        max=4000,
-                        radius=8,
-                        blur=10)
-     } else if (input$adjust_score == 'day_diff_absolute'){
-         map_2019 %>%
-             addHeatmap(
-                        lng=~station_longitude,
-                        lat=~station_latitude,
-                        intensity=~total_day_diff,
-                        max=50,
-                        radius=8,
-                        blur=10)
-         
-     }else if (input$adjust_score == 'day_diff_percentage'){
-         map_2019 %>%
-             addHeatmap(
-                        lng=~station_longitude,
-                        lat=~station_latitude,
-                        intensity=~total_diff_percentage,#change to total day diff percentage
-                        max=0.1,
-                        radius=8,
-                        blur=10)
-         
-     }
-     }) #left map plot
+    # all data pre covid
+    data_proc_time_pre <- reactive({
+      dat = data_pre %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew==3) filter(., app_or_renew=="Renewal") else .} %>%
+        summarize(proc_time=mean(difftime(e_date, s_date)))
+      return(dat)
+    })
     
-    output$right_map <- renderLeaflet({
-        #adjust for weekday/weekend effect
-        if (input$adjust_time =='Overall') {
-            leaflet_plt_df <- citi_bike_covid_df %>% 
-                group_by(station_id) %>%
-                summarise(total_start_count = sum(startcount),
-                          total_end_count = sum(endcount),
-                          total_day_diff = sum(day_diff),
-                          total_diff_percentage = sum(day_diff)/sum(startcount),
-                ) %>% left_join(citi_bike_station_info,by='station_id')
-        } else {
-            leaflet_plt_df <- citi_bike_covid_df %>% 
-                filter(weekend_or_weekday == input$adjust_time) %>%
-                group_by(station_id) %>%
-                summarise(total_start_count = sum(startcount),
-                          total_end_count = sum(endcount),
-                          total_day_diff = sum(day_diff),
-                          total_diff_percentage = sum(day_diff)/sum(startcount),
-                ) %>% left_join(citi_bike_station_info,by='station_id')
-        } 
-        #initial the map to plot on
-        map_2020 <- leaflet_plt_df %>%
-            leaflet(options = leafletOptions(minZoom = 11, maxZoom = 13)) %>%
-            addTiles() %>%
-            addProviderTiles("CartoDB.Positron",
-                             options = providerTileOptions(noWrap = TRUE)) %>%
-            setView(-73.9834,40.7504,zoom = 12) 
-        
-        if (input$adjust_score == 'start_cnt') {
-            map_2020 %>%
-                addHeatmap(
-                           lng=~station_longitude,
-                           lat=~station_latitude,
-                            intensity=~total_start_count, #change to total start count
-                            max=4000,
-                            radius=8,
-                           blur=10)
-        }else if (input$adjust_score == 'end_cnt') {
-            map_2020 %>%
-                addHeatmap(
-                           lng=~station_longitude,
-                           lat=~station_latitude,
-                           intensity=~total_end_count,#change to total end count
-                           max=4000,
-                           radius=8,
-                           blur=10)
-        } else if (input$adjust_score == 'day_diff_absolute'){
-            map_2020 %>%
-                addHeatmap(
-                           lng=~station_longitude,
-                           lat=~station_latitude,
-                           intensity=~total_day_diff,#change to total day diff
-                           max=50,
-                           radius=8,
-                           blur=10)
-            
-        }else if (input$adjust_score == 'day_diff_percentage'){
-            map_2020 %>%
-                addHeatmap(
-                           lng=~station_longitude,
-                           lat=~station_latitude,
-                           intensity=~total_diff_percentage,#change to total day diff percentage
-                           max=0.1,
-                           radius=8,
-                           blur=10)
-            
-        }
-        
-    }) #right map plot
+    # all data after covid
+    data_proc_time_after <- reactive({
+      dat = data_after %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew==3) filter(., app_or_renew=="Renewal") else .} %>%
+        summarize(proc_time=mean(difftime(e_date, s_date)))
+      return(dat)
+    })
+    
+    # data by biz type
+    data_proc_time_cat <- reactive({
+      dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew==3) filter(., app_or_renew=="Renewal") else .} %>%
+        filter(category==input$category) %>%
+        summarize(proc_time=mean(difftime(e_date, s_date)))
+      return(dat)
+    })
+    
+    # data by biz type pre covid
+    data_proc_time_cat_pre <- reactive({
+      dat = data_pre %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew==3) filter(., app_or_renew=="Renewal") else .} %>%
+        filter(category==input$category) %>%
+        summarize(proc_time=mean(difftime(e_date, s_date)))
+      return(dat)
+    })
+    
+    # data by biz type after covid
+    data_proc_time_cat_after <- reactive({
+      dat = data_after %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew==3) filter(., app_or_renew=="Renewal") else .} %>%
+        filter(category==input$category) %>%
+        summarize(proc_time=mean(difftime(e_date, s_date)))
+      return(dat)
+    })
+    
+  # outputs (plots)
+    # plot all data
+    output$plot_proc_time_1 <- renderPlot({
+      ggplot(data_proc_time(), aes(x=month, y=proc_time)) +
+        geom_line(size=1.5) + xlab("Month") + 
+        ylab("Average Processing Time in Days") + theme_minimal()
+    })
+    
+    # plot data by biz type
+    output$plot_proc_time_2 <- renderPlot({
+      ggplot(data_proc_time_cat(), aes(x=month, y=proc_time)) +
+        geom_line(size=1.5) + xlab("Month") + 
+        ylab("Average Processing Time in Days") +  theme_minimal()
+    })
+    
+  # outputs (texts)
+    # all data text
+    output$val_proc_time_1 <- renderText({
+      paste("Average processing time: ", 
+            round(mean(data_proc_time()$proc_time),0), " days",
+            sep="")
+    })
+    
+    # all data pre covid text
+    output$val_proc_time_1_1 <- renderText({
+      paste("Before COVID-19: ", 
+            round(mean(data_proc_time_pre()$proc_time),0), " days",
+            sep="")
+    })
+    
+    # all data after covid text
+    output$val_proc_time_1_2 <- renderText({
+      paste("Since COVID-19: ", 
+            round(mean(data_proc_time_after()$proc_time),0), " days", 
+            sep="")
+    })
+    
+    # data by biz type text
+    output$val_proc_time_2 <- renderText({
+      paste("Average processing time: ", 
+            round(mean(data_proc_time_cat()$proc_time),0), " days",
+            sep="")
+    })
+    
+    # data by biz type pre covid text
+    output$val_proc_time_2_1 <- renderText({
+      paste("Before COVID-19: ", 
+            round(mean(data_proc_time_cat_pre()$proc_time),0), " days",
+            sep="")
+    })
+    
+    # data by biz type after covid text
+    output$val_proc_time_2_2 <- renderText({
+      paste("Since COVID-19: ", 
+            round(mean(data_proc_time_cat_after()$proc_time),0), " days",
+            sep="")
+    })
+    
+    
+    
+    #---------pass_rate (passing rate)----------
+  # create appropriate data in accordance with the user input
+    # all data
+    data_pass_rate <- reactive({
+      dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew_1==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew_1==3) filter(., app_or_renew=="Renewal") else .} %>%
+        summarize(pass_rate = sum(status=="Issued")/(sum(status=="Issued")+
+                                                         sum(status=="Denied")))
+      return(dat)
+    })
+    
+    # all data pre covid
+    data_pass_rate_pre <- reactive({
+      dat = data_pre %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew_1==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew_1==3) filter(., app_or_renew=="Renewal") else .} %>%
+        summarize(pass_rate = sum(status=="Issued")/(sum(status=="Issued")+
+                                                       sum(status=="Denied")))
+      return(dat)
+    })
+    
+    # all data after covid
+    data_pass_rate_after <- reactive({
+      dat = data_after %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew_1==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew_1==3) filter(., app_or_renew=="Renewal") else .} %>%
+        summarize(pass_rate = sum(status=="Issued")/(sum(status=="Issued")+
+                                                       sum(status=="Denied")))
+      return(dat)
+    })
+    
+    # data by biz type
+    data_pass_rate_cat <- reactive({
+      dat = data %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew_1==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew_1==3) filter(., app_or_renew=="Renewal") else .} %>%
+        filter(category==input$category_1) %>%
+        summarize(pass_rate = sum(status=="Issued")/(sum(status=="Issued")+
+                                                       sum(status=="Denied")))
+      return(dat)
+    })
+    
+    # data by biz type pre covid
+    data_pass_rate_cat_pre <- reactive({
+      dat = data_pre %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew_1==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew_1==3) filter(., app_or_renew=="Renewal") else .} %>%
+        filter(category==input$category_1) %>%
+        summarize(pass_rate = sum(status=="Issued")/(sum(status=="Issued")+
+                                                       sum(status=="Denied")))
+      return(dat)
+    })
+    
+    # data by biz type after covid
+    data_pass_rate_cat_after <- reactive({
+      dat = data_after %>% group_by(month = floor_date(s_date, "month")) %>%
+        {if (input$app_or_renew_1==2) filter(., app_or_renew=="Application") else .} %>%
+        {if (input$app_or_renew_1==3) filter(., app_or_renew=="Renewal") else .} %>%
+        filter(category==input$category_1) %>%
+        summarize(pass_rate = sum(status=="Issued")/(sum(status=="Issued")+
+                                                       sum(status=="Denied")))
+      return(dat)
+    })
+    
+  # output (plots)
+    # plot all data
+    output$plot_pass_rate_1 <- renderPlot({
+      ggplot(data_pass_rate(), aes(x=month, y=pass_rate)) +
+        geom_line(size=1.5) + xlab("Month") + 
+        ylab("Average Passing Rate") + theme_minimal()
+    })
+    
+    # plot data by biz type
+    output$plot_pass_rate_2 <- renderPlot({
+      ggplot(data_pass_rate_cat(), aes(x=month, y=pass_rate)) +
+        geom_line(size=1.5) + xlab("Month") + 
+        ylab("Average Passing Rate") + theme_minimal()
+    })
+    
+    # output (texts)
+    # all data text
+    output$val_pass_rate_1 <- renderText({
+      paste("Average passing rate: ", 
+            round(100*mean(data_pass_rate()$pass_rate),2), "%",
+            sep="")
+    })
+    
+    # all data before covid text
+    output$val_pass_rate_1_1 <- renderText({
+      paste("Before COVID-19: ", 
+            round(100*mean(data_pass_rate_pre()$pass_rate),2), "%",
+            sep="")
+    })
+    
+    # all data after covid text
+    output$val_pass_rate_1_2 <- renderText({
+      paste("Since COVID-19: ", 
+            round(100*mean(data_pass_rate_after()$pass_rate),2), "%",
+            sep="")
+    })
+    
+    # data by biz type text
+    output$val_pass_rate_2 <- renderText({
+      paste("Average passing rate: ", 
+            round(100*mean(data_pass_rate_cat()$pass_rate),2), "%",
+            sep="")
+    })
+    
+    # data by biz type before covid text
+    output$val_pass_rate_2_1 <- renderText({
+      paste("Before COVID-19: ", 
+            round(100*mean(data_pass_rate_cat_pre()$pass_rate),2), "%",
+            sep="")
+    })
+    
+    # data by biz type after covid text
+    output$val_pass_rate_2_2 <- renderText({
+      paste("Since COVID-19: ", 
+            round(100*mean(data_pass_rate_cat_after()$pass_rate),2), "%",
+            sep="")
+    })
+    
 
 })
 
