@@ -47,9 +47,25 @@ shinyUI(dashboardPage(
       #-----------home------------
       tabItem(tabName="home",
               fluidPage(
-                h2(strong("Title XXXXXXXXX"), align="center"),
-                h3("Team Members XXXXXXXXXXX", align="center")
-                #ADD CONTENT XXXXXXXXXXXXXX
+                h2(strong("COVID-19's Impact on NYC Businesses"), align="center"),
+                h3("Group Members: Guosheng Cai, Sibo Geng, Ke Liu, Xubo Wang", align="center"),
+                br(),
+                br(),
+                p("In this project, our group will explore the dataset containing the business license application from NYC open data.", 
+                  style = "font-size:20pt; margin-left:50px; margin-right:50px"),
+                p("As many have observed, many businesses have suffered tremendously during the COVID-19 pandamic. While many old 
+                  businesses have been shut down, a much few number of new businesses have started during the period. We visualized the 
+                  data to provide clear and direct view of COVID-19's impact on businesses in New York, particularly from the angle of 
+                  the pandemic's impact on the license application, both for new applications
+                  and renewal of license.", style = "font-size:20pt; margin-left:50px; margin-right:50px"),
+                p("In this project, we want to explore offer some insights into both the impact on businesses overrall, 
+                  as well as the impact to particular types of businesses. We hope this project would allow you to gain some insights, 
+                  especially for types of businesses that are often forgotten by by the media such as home improvement services 
+                  and aundries.", style = "font-size:20pt; margin-left:50px; margin-right:50px"),
+                br(),
+                br(),
+                p("The dataset is available at https://data.cityofnewyork.us/Business/License-Applications/ptev-4hud", 
+                  style = "font-size:16pt; margin-left:50px; margin-right:50px")
               )
       ),
       
@@ -74,23 +90,22 @@ shinyUI(dashboardPage(
               fluidPage(
                 sidebarLayout(
                   sidebarPanel(
+                    p(strong("In this tab, you can explore the the change in processing time for license applications."), 
+                      style = "font-size:12pt; color:grey"),
+                    p(strong("The top graph will demonstrate the the processing time for all types of businesses, while
+                      you can choose a particular type of business to be displayed in bottom graph for comparison"),
+                      style = "font-size:12pt; color:grey"),
+                    hr(),
                     radioButtons("app_or_renew", 
                                  label=h3("Type of Application"),
                                  choices=list("All"=1, "New Application"=2,
                                                  "Renewal"=3)
                                 ),
+                    span(strong(textOutput("val_proc_time_1")), style="font-size:18px; color:orange"),
                     br(),
                     br(),
                     br(),
-                    br(),
-                    br(),
-                    br(),
-                    br(),
-                    br(),
-                    br(),
-                    br(),
-                    br(),
-                    br(),
+                    hr(),
                     radioButtons("category", label=h3("Business Category"),
                                  choices=list("Home Improvement Contractor",
                                               "Tobacco Retail Dealer",
@@ -104,15 +119,13 @@ shinyUI(dashboardPage(
                                               "Dealer In Products",
                                               "Pawnbroker",
                                               "Secondhand Dealer - Auto")),
+                    span(strong(textOutput("val_proc_time_2")), style="font-size:18px; color:orange"),
                     width=3
                   ),
                 mainPanel(
-                  h3("All Businesses", align="center"),
-                  span(textOutput("val_proc_time_1"), style="font-size: 18px"),
+                  h2("All Businesses", align="center"),
                   plotOutput("plot_proc_time_1"),
-                  hr(),
-                  h3("Business-type Specific", align="center"),
-                  span(textOutput("val_proc_time_2"), style="font-size: 18px"),
+                  h2("Business-type Specific", align="center"),
                   plotOutput("plot_proc_time_2")
                 ))
               )
@@ -123,23 +136,21 @@ shinyUI(dashboardPage(
               fluidPage(
                 sidebarLayout(
                   sidebarPanel(
+                    p(strong("In this tab, you can explore the the change in passing rate for license applications."), 
+                      style = "font-size:12pt; color:grey"),
+                    p(strong("The top graph will demonstrate the the passing for all types of businesses, while
+                      you can choose a particular type of business to be displayed in bottom graph for comparison"),
+                      style = "font-size:12pt; color:grey"),
                     radioButtons("app_or_renew_1", 
                                  label=h3("Type of Application"),
                                  choices=list("All"=1, "New Application"=2,
                                               "Renewal"=3),
                                  selected=1),
+                    span(strong(textOutput("val_pass_rate_1")), style="font-size: 18px; color:orange"),
                     br(),
                     br(),
                     br(),
-                    br(),
-                    br(),
-                    br(),
-                    br(),
-                    br(),
-                    br(),
-                    br(),
-                    br(),
-                    br(),
+                    hr(),
                     radioButtons("category_1", label=h3("Business Category"),
                                  choices=list("Home Improvement Contractor",
                                               "Tobacco Retail Dealer",
@@ -154,15 +165,13 @@ shinyUI(dashboardPage(
                                               "Pawnbroker",
                                               "Secondhand Dealer - Auto"),
                                  selected="Home Improvement Contractor"),
+                    span(strong(textOutput("val_pass_rate_2")), style="font-size: 18px; color:orange"),
                     width=3
                   ),
                   mainPanel(
-                    h3("All Businesses", align="center"),
-                    span(textOutput("val_pass_rate_1"), style="font-size: 18px"),
+                    h2("All Businesses", align="center"),
                     plotOutput("plot_pass_rate_1"),
-                    hr(),
-                    h3("All Businesses", align="center"),
-                    span(textOutput("val_pass_rate_2"), style="font-size: 18px"),
+                    h2("Business-type Specific", align="center"),
                     plotOutput("plot_pass_rate_2")
                   ))
               )

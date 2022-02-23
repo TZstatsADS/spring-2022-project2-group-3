@@ -71,14 +71,12 @@ data = data_raw %>%
   filter(s_date >= as_date("01/01/2017",format = "%m/%d/%Y")) %>%
   filter(s_date < e_date)
 
-#Identifying major categories
-#cats = data %>% count(category) %>%
-#  filter(n>1000) %>%
-#  select(category)
-#data = data %>%
-#  filter(category %in% cats$category)
-
-
+# data_pre = data %>%
+#  filter(s_date < as_date("03/01/2020",format = "%m/%d/%Y")) %>%
+  
+# data_after = data %>%
+#  filter(s_date < as_date("03/01/2020",format = "%m/%d/%Y")) %>%
+  
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
 
@@ -103,7 +101,7 @@ shinyServer(function(input, output) {
     output$plot_proc_time_1 <- renderPlot({
       ggplot(data_proc_time(), aes(x=month, y=proc_time)) +
         geom_line(size=1.5) + xlab("Month") + 
-        ylab("Average Processing Time in Days")
+        ylab("Average Processing Time in Days") + theme_minimal()
     })
     
     output$val_proc_time_1 <- renderText({
@@ -115,7 +113,7 @@ shinyServer(function(input, output) {
     output$plot_proc_time_2 <- renderPlot({
       ggplot(data_proc_time_cat(), aes(x=month, y=proc_time)) +
         geom_line(size=1.5) + xlab("Month") + 
-        ylab("Average Processing Time in Days")
+        ylab("Average Processing Time in Days") +  theme_minimal()
     })
     
     output$val_proc_time_2 <- renderText({
@@ -149,10 +147,13 @@ shinyServer(function(input, output) {
     output$plot_pass_rate_1 <- renderPlot({
       ggplot(data_pass_rate(), aes(x=month, y=pass_rate)) +
         geom_line(size=1.5) + xlab("Month") + 
-        ylab("Average Passing Rate")
+        ylab("Average Passing Rate") + theme_minimal()
     })
     
     output$val_pass_rate_1 <- renderText({
+      paste("The average passing rate is ", 
+            round(100*mean(data_pass_rate()$pass_rate),2), "%",
+            sep="")
       paste("The average passing rate is ", 
             round(100*mean(data_pass_rate()$pass_rate),2), "%",
             sep="")
@@ -161,8 +162,9 @@ shinyServer(function(input, output) {
     
     output$plot_pass_rate_2 <- renderPlot({
       ggplot(data_pass_rate_cat(), aes(x=month, y=pass_rate)) +
-        geom_line(size=1.5) + xlab("Month") + 
-        ylab("Average Passing Rate")
+        geom_line(size=1.5) + xlab("Month") +  
+        ylab("Average Passing Rate") + 
+        theme_minimal()
     })
     
     output$val_pass_rate_2 <- renderText({
