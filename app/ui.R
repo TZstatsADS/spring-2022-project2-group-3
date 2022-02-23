@@ -102,8 +102,8 @@ shinyUI(dashboardPage(
                                                  "Renewal"=3)
                                 ),
                     span(strong(textOutput("val_proc_time_1")), style="font-size:18px; color:orange"),
-                    br(),
-                    br(),
+                    span(strong(textOutput("val_proc_time_1_1")), style="font-size:16px; color:blue"),
+                    span(strong(textOutput("val_proc_time_1_2")), style="font-size:16px; color:blue"),
                     br(),
                     hr(),
                     radioButtons("category", label=h3("Business Category"),
@@ -120,6 +120,8 @@ shinyUI(dashboardPage(
                                               "Pawnbroker",
                                               "Secondhand Dealer - Auto")),
                     span(strong(textOutput("val_proc_time_2")), style="font-size:18px; color:orange"),
+                    span(strong(textOutput("val_proc_time_2_1")), style="font-size:16px; color:blue"),
+                    span(strong(textOutput("val_proc_time_2_2")), style="font-size:16px; color:blue"),
                     width=3
                   ),
                 mainPanel(
@@ -147,8 +149,8 @@ shinyUI(dashboardPage(
                                               "Renewal"=3),
                                  selected=1),
                     span(strong(textOutput("val_pass_rate_1")), style="font-size: 18px; color:orange"),
-                    br(),
-                    br(),
+                    span(strong(textOutput("val_pass_rate_1_1")), style="font-size:16px; color:blue"),
+                    span(strong(textOutput("val_pass_rate_1_2")), style="font-size:16px; color:blue"),
                     br(),
                     hr(),
                     radioButtons("category_1", label=h3("Business Category"),
@@ -166,6 +168,8 @@ shinyUI(dashboardPage(
                                               "Secondhand Dealer - Auto"),
                                  selected="Home Improvement Contractor"),
                     span(strong(textOutput("val_pass_rate_2")), style="font-size: 18px; color:orange"),
+                    span(strong(textOutput("val_pass_rate_2_1")), style="font-size:16px; color:blue"),
+                    span(strong(textOutput("val_pass_rate_2_2")), style="font-size:16px; color:blue"),
                     width=3
                   ),
                   mainPanel(
