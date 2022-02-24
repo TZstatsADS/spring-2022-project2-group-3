@@ -295,15 +295,22 @@ shinyUI(
                        
                        sidebarPanel(
                          
+                         # introduction of the content in the current tab
+                         p(strong("In this tab, you can find the number of applications changing over time and the influence of COVID-19 on it. It can be viewed as a whole, or from different license type and application category."), 
+                           style = "font-size:12pt; color:grey"),
+                         p(strong("The orange line represents the fluctuation of the amount of new cases from 2020 to 2022."),
+                           style = "font-size:12pt; color:grey"),
+                         hr(),
+                         selectInput('ts_input3', "Category",
+                                     choices = c('All','Application or Renew','Basic or Special'),
+                                     selected = 'All'),
+                         
                          selectInput('ts_input1', 'Year',
                                      choices = c('All','2017','2018','2019','2020','2021','2022'),
                                      selected = 'All'),
                          selectInput('ts_input2', "License Type",
                                      choices = c('All','Business','Individual'),
-                                     selected = 'All'),
-                         selectInput('ts_input3', "Category",
-                                     choices = c('All','Application or Renew','Application Categoty'),
-                                     selected = 'All'),
+                                     selected = 'All')
                          
                        ),
                        
@@ -318,7 +325,16 @@ shinyUI(
              #---------findings----------
              tabItem(tabName="findings",
                      fluidPage(
-                       h3("XXXXXXXXXXX", align="center")
+                       h5("DCA offers two license types: Business, license is issued to an entity/organization based on their address and Individual, license is issued to an individual person. From the plots we can find that the number of applications of individual type license was decreased significantly during the beginning of Covid-19 period while the amount of applications of business suffered a less loss. Also, most of the applications of individual during this time are renewal rather than application. (New application is for applicant does not currently hold a DCA license, a renewal is for applicant holds a DCA license that is about to expire)."),
+                      
+                       h5("Applications are categorized as either Basic or Special. Special applications require additional documentation and/or liaising with external agencies. From 2020 to 2022, basic type took the majority of individual application while 2018 was still a blooming stage of special type license. On the contrary, the balance of basic and special in business type was kept successfully even during the special time."),
+                       
+
+                      h5("New York City’s Emergency Executive Orders (EEOs) extended license expiration dates and renewal application deadlines for those whose licenses were going to expire from March 12, 2020 through August 14, 2021. As a result, the number of application for renewal after March 2020 decreased. 
+At the end of 2020, the quantity of application began to drift upwards because the number of Covid case in nyc continued to fall, and it returned to normal due to the new outbreak of virus at the start of 2021.
+On June 24, 2021, New York’s COVID-19 State of Emergency expired and many New York Forward industry reopening guidance documents are no longer mandatory. We can see from the plots that the total amount of application, especially the renewal increased.")
+                       
+                       
                        #ADD CONTENT XXXXXXXXXXXXXX
                      )
              )

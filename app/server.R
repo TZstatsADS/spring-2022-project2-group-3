@@ -114,7 +114,7 @@ License_Application <- read_csv("data/License_Applications.csv")
 NYC_License <- License_Application %>% filter(State == "NY") %>%
     mutate(Start_date = mdy(`Start Date`), End_date = mdy(`End Date`), City = tolower(City)) %>%
     dplyr::select(Start_date, End_date, `Application ID`, `License Number`, `License Type`,
-                  `Application or Renewal`,`Business Name`,Status,`License Category`,`Application Category`,`Building Number`,Street,City,State,Zip,Longitude,Latitude) %>%
+                  `Application or Renewal`,`Business Name`,Status,`License Category`,`Basic or Special` = `Application Category`,`Building Number`,Street,City,State,Zip,Longitude,Latitude) %>%
     filter(Start_date >= as.Date("2017-01-01")) %>%
     filter(City %in% c("bronx","brooklyn","new york",
                        "staten island", "manhattan", "queens village", "queens vlg")) 
